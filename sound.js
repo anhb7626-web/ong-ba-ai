@@ -1,8 +1,8 @@
 /*
- * Âm thanh của Ông Bà Kể – tất cả tự tạo bằng Web Audio API, không dùng file nhạc,
- * nên không vướng bản quyền và không tốn dung lượng.
+ * Âm thanh của Ông Bà Kể.
  *
- *  - Nhạc nền: giai điệu ngũ cung (Đô Rê Fa Sol La) gảy như đàn tranh, có luyến "nhấn",
+ *  - Nhạc nền: hai bản "Kìa con bướm vàng" (music/, khai báo trong config.js): bản êm khi kể chuyện,
+ *    bản vui khi đố vui, đồng dao. Không có file thì dùng nhạc tự tạo: giai điệu ngũ cung (Đô Rê Fa Sol La) gảy như đàn tranh, có luyến "nhấn",
  *    nốt trầm giữ nhịp, phát ngẫu nhiên nên không lặp đi lặp lại.
  *  - Tiếng động: bấm nút (mõ gỗ), trả lời đúng (chuỗi nốt đi lên), nhắc lại (hai nốt dịu),
  *    hết bài (chuông nhỏ).
@@ -11,18 +11,43 @@
 (function () {
   let ctx = null, master, musicBus, sfxBus, timer = null, playing = false;
   let musicVol = 0.16, nextTime = 0, step = 0, idx = 4;
-  // Bài hát thu sẵn (nếu có): liệt kê trong config.js → music. Không có thì dùng nhạc tự tạo.
-  const TRACKS = ((window.OBK_CONFIG || {}).music || []).filter(Boolean);
-  let song = null, songIdx = Math.floor(Math.random() * 1000);
-  function playSong() {
-    if (!song) {
-      song = new Audio(); song.preload = "auto";
-      try { ctx.createMediaElementSource(song).connect(musicBus); } catch (e) {}
-      song.onended = () => { songIdx++; playSong(); };
-      song.onerror = () => { song.onerror = null; console.warn("Không mở được bài hát, chuyển sang nhạc tự tạo"); TRACKS.length = 0; timer = setInterval(schedule, 120); };
-    }
-    song.src = TRACKS[songIdx % TRACKS.length];
-    song.play().catch(() => {});
+  // Nhạc nền thu sẵn (config.js → music): một danh sách bài, hoặc { calm: [...], lively: [...] }
+  // để lúc kể chuyện phát bản êm, lúc đố vui / đồng dao phát bản vui. Không có thì dùng nhạc tự tạo.
+  const CFG_MUSIC = (window.OBK_CONFIG || {}).music || [];
+  const LISTS = Array.isArray(CFG_MUSIC)
+    ? { calm: CFG_MUSIC.filter(Boolean), lively: CFG_MUSIC.filter(Boolean) }
+    : { calm: (CFG_MUSIC.calm || []).filter(Boolean), lively: (CFG_MUSIC.lively || CFG_MUSIC.calm || []).filter(Boolean) };
+  let useTracks = LISTS.calm.length > 0 || LISTS.lively.length > 0;
+  const players = {};
+  let cur = "calm";
+  function listFor(name) { return LISTS[name].length ? LISTS[name] : LISTS.calm.length ? LISTS.calm : LISTS.lively; }
+  function player(name) {
+    if (players[name]) return players[name];
+    const list = listFor(name);
+    const el = new Audio(); el.preload = "auto"; el.loop = list.length === 1;
+    const g = ctx.createGain(); g.gain.value = 0; g.connect(musicBus);
+    try { ctx.createMediaElementSource(el).connect(g); } catch (e) {}
+    const p = { el, g, list, idx: Math.floor(Math.random() * 1000) };
+    el.onended = () => { p.idx++; el.src = list[p.idx % list.length]; el.play().catch(() => {}); };
+    el.onerror = () => {
+      console.warn("Không mở được nhạc nền, chuyển sang nhạc tự tạo");
+      useTracks = false; Object.values(players).forEach((q) => q.el.pause());
+      if (playing) { musicBus.gain.setTargetAtTime(musicVol, ctx.currentTime, 0.5); clearInterval(timer); timer = setInterval(schedule, 120); }
+    };
+    el.src = list[p.idx % list.length];
+    return (players[name] = p);
+  }
+  // Chuyển bài mượt: bản đang phát nhỏ dần, bản mới to dần; mỗi bản nhớ chỗ đang phát.
+  function playTrack(name) {
+    const p = player(name);
+    Object.keys(players).forEach((k) => {
+      const q = players[k];
+      if (q === p) return;
+      q.g.gain.setTargetAtTime(0, ctx.currentTime, 0.35);
+      setTimeout(() => { if (players[cur] !== q || !playing) q.el.pause(); }, 1500);
+    });
+    p.g.gain.setTargetAtTime(1, ctx.currentTime, 0.4);
+    p.el.play().catch(() => {});
   }
   // Ngũ cung Bắc trên nền Đô: C D F G A, hai quãng tám
   const BASE = 261.63;
@@ -126,7 +151,7 @@
       playing = true;
       nextTime = ctx.currentTime + 0.1;
       musicBus.gain.cancelScheduledValues(ctx.currentTime);
-      if (TRACKS.length) { musicBus.gain.setTargetAtTime(musicVol * 2.2, ctx.currentTime, 0.8); if (song && song.src) song.play().catch(() => {}); else playSong(); return; }
+      if (useTracks) { musicBus.gain.setTargetAtTime(musicVol * 2.2, ctx.currentTime, 0.8); playTrack(cur); return; }
       musicBus.gain.setTargetAtTime(musicVol, ctx.currentTime, 0.8);
       timer = setInterval(schedule, 120);
     },
@@ -134,15 +159,17 @@
       if (!ctx || !playing) return;
       playing = false;
       musicBus.gain.setTargetAtTime(0, ctx.currentTime, 0.3);
-      setTimeout(() => { if (!playing) { clearInterval(timer); if (song) song.pause(); } }, 1200);
+      setTimeout(() => { if (!playing) { clearInterval(timer); Object.values(players).forEach((p) => p.el.pause()); } }, 1200);
     },
     style(name) {
       lively = name === "lively";
+      const next = lively ? "lively" : "calm";
+      if (next !== cur) { cur = next; if (useTracks && playing) playTrack(cur); }
       BPM = lively ? 92 : 66; BEAT = 60 / BPM;
     },
     duck(on) {
       if (!ctx || !playing) return;
-      const v = musicVol * (TRACKS.length ? 2.2 : 1);
+      const v = musicVol * (useTracks ? 2.2 : 1);
       musicBus.gain.setTargetAtTime(on ? v * 0.2 : v, ctx.currentTime, on ? 0.12 : 0.6);
     },
     sfx(name) {
