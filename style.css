@@ -670,6 +670,9 @@ body.bedtime .input-panel::before { display: none; }
 
 .char-talk { position: relative; transition: transform .25s cubic-bezier(.2, 1.6, .4, 1); }
 .char-talk.talking { transform: scale(1.08); }
+/* khi ông bà phản ứng (vỗ tay, "à…", nghe), nhân vật phóng to để cháu thấy rõ */
+.char-talk { transform-origin: 20% 20%; z-index: 6; }
+.char-talk.happy, .char-talk.think, .char-talk.listen { transform: scale(1.75); }
 .char-talk.talking::before, .char-talk.talking::after {
   content: ""; position: absolute; inset: 8%; border-radius: 50%; border: 2.5px solid var(--nghe);
   animation: ring 1.3s ease-out infinite; pointer-events: none;
