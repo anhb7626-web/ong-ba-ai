@@ -11,6 +11,19 @@
 (function () {
   let ctx = null, master, musicBus, sfxBus, timer = null, playing = false;
   let musicVol = 0.16, nextTime = 0, step = 0, idx = 4;
+  // Bài hát thu sẵn (nếu có): liệt kê trong config.js → music. Không có thì dùng nhạc tự tạo.
+  const TRACKS = ((window.OBK_CONFIG || {}).music || []).filter(Boolean);
+  let song = null, songIdx = Math.floor(Math.random() * 1000);
+  function playSong() {
+    if (!song) {
+      song = new Audio(); song.preload = "auto";
+      try { ctx.createMediaElementSource(song).connect(musicBus); } catch (e) {}
+      song.onended = () => { songIdx++; playSong(); };
+      song.onerror = () => { song.onerror = null; console.warn("Không mở được bài hát, chuyển sang nhạc tự tạo"); TRACKS.length = 0; timer = setInterval(schedule, 120); };
+    }
+    song.src = TRACKS[songIdx % TRACKS.length];
+    song.play().catch(() => {});
+  }
   // Ngũ cung Bắc trên nền Đô: C D F G A, hai quãng tám
   const BASE = 261.63;
   const SCALE = [0, 2, 5, 7, 9, 12, 14, 17, 19, 21].map((s) => BASE * Math.pow(2, s / 12));
@@ -113,6 +126,7 @@
       playing = true;
       nextTime = ctx.currentTime + 0.1;
       musicBus.gain.cancelScheduledValues(ctx.currentTime);
+      if (TRACKS.length) { musicBus.gain.setTargetAtTime(musicVol * 2.2, ctx.currentTime, 0.8); if (song && song.src) song.play().catch(() => {}); else playSong(); return; }
       musicBus.gain.setTargetAtTime(musicVol, ctx.currentTime, 0.8);
       timer = setInterval(schedule, 120);
     },
@@ -120,7 +134,7 @@
       if (!ctx || !playing) return;
       playing = false;
       musicBus.gain.setTargetAtTime(0, ctx.currentTime, 0.3);
-      setTimeout(() => { if (!playing) clearInterval(timer); }, 1200);
+      setTimeout(() => { if (!playing) { clearInterval(timer); if (song) song.pause(); } }, 1200);
     },
     style(name) {
       lively = name === "lively";
@@ -128,7 +142,8 @@
     },
     duck(on) {
       if (!ctx || !playing) return;
-      musicBus.gain.setTargetAtTime(on ? musicVol * 0.25 : musicVol, ctx.currentTime, on ? 0.12 : 0.6);
+      const v = musicVol * (TRACKS.length ? 2.2 : 1);
+      musicBus.gain.setTargetAtTime(on ? v * 0.2 : v, ctx.currentTime, on ? 0.12 : 0.6);
     },
     sfx(name) {
       if (!api.sfxOn || !init()) return;

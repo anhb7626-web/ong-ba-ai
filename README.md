@@ -113,3 +113,10 @@ python3 tools/gen-audio-edge.py speech.json
 ```
 
   (Hoặc dùng FPT.AI: `FPT_API_KEY=... node tools/gen-audio.js`.)
+
+## Góc giáo viên (Cha mẹ → Dành cho thầy cô)
+- **Giao bài tuần:** chọn bài, chép link, gửi vào nhóm phụ huynh. Mở link là bài hiện ở màn hình chính của cháu.
+- **Soạn bài mới:** mỗi dòng một câu; câu hỏi viết `? Câu hỏi | đáp án đúng | đáp án sai`. Bài lưu trên máy cô; khi giao bài này, nội dung đi kèm trong link nên phụ huynh mở là có. Nút "Mã cho data.js" chép bài để đưa hẳn vào kho nội dung.
+
+## Nhạc nền bằng bài hát thật
+Xem `music/README.md` (chú ý bản quyền).

@@ -208,6 +208,37 @@ window.OBK_DATA = {
         "Em gái của bố thì con gọi là gì nhỉ?",
         "Con muốn gọi điện cho ông bà để nói gì?"
       ]
+    },
+    {
+      id: "ngay-tet",
+      title: "Ngày Tết",
+      emoji: "🧧",
+      steps: [
+        { t: "say", text: "Cháu ơi, sắp đến Tết rồi! Ở Việt Nam, nhà nhà đều dọn dẹp, trang trí hoa đào, hoa mai." },
+        { t: "ask", text: "Ngày Tết, người Việt hay gói bánh gì?",
+          choices: ["Bánh chưng", "Bánh mì", "Bánh kem"], answer: 0,
+          accept: ["chung"],
+          recast: "Ngày Tết mình gói bánh chưng cháu ạ. Bánh chưng gói bằng lá dong, bên trong có gạo nếp, đậu xanh và thịt." },
+        { t: "say", text: "Sáng mùng Một, các cháu mặc quần áo đẹp, đến chúc Tết ông bà." },
+        { t: "ask", text: "Cháu chúc Tết {X} thế nào nhỉ?",
+          choices: ["Cháu chúc {X} sống lâu, mạnh khỏe ạ", "Cho cháu tiền", "Chào {X}"], answer: 0,
+          accept: ["chuc", "manh khoe", "song lau"],
+          recast: "Mình chúc thế này nhé: Cháu chúc {X} sống lâu, mạnh khỏe ạ. Ông bà nghe là vui lắm.",
+          yes: "{Xc} cảm ơn cháu! {Xc} cũng chúc cháu chăm ngoan, học giỏi." },
+        { t: "say", text: "Rồi ông bà lì xì cho cháu một phong bao đỏ. Lì xì còn gọi là mừng tuổi, để chúc cháu một năm mới may mắn." },
+        { t: "ask", text: "Khi được lì xì, cháu nói gì?",
+          choices: ["Cháu cảm ơn {X} ạ", "Ít quá", "Không nói gì"], answer: 0,
+          accept: ["cam on"],
+          recast: "Khi được lì xì, cháu nhận bằng hai tay và nói: Cháu cảm ơn {X} ạ." },
+        { t: "ask", open: true, text: "Tết ở nhà cháu có gì vui? Cháu kể cho {X} nghe với.",
+          choices: ["Nhà cháu gói bánh chưng", "Cháu mặc áo dài", "Cháu xem múa lân", "Cháu gọi điện chúc Tết ông bà"],
+          reply: "Vui quá! Ở đâu có cả nhà quây quần thì ở đó là Tết cháu ạ." }
+      ],
+      parentTips: [
+        "Tết này con muốn chúc ông bà câu gì?",
+        "Con nhận lì xì thì phải nói gì nhỉ?",
+        "Nhà mình cùng gói bánh chưng hoặc làm một món Tết nhé!"
+      ]
     }
   ],
 
@@ -428,6 +459,8 @@ window.OBK_DATA = {
   /* ===================== TỪ KHÓ (Xem nghĩa) ===================== */
   /* "từ": { en: "tiếng Anh", zh: "tiếng Trung giản thể", py: "pinyin" } */
   glossary: {
+    "chúc Tết": { en: "to give New Year wishes", zh: "拜年", py: "bàinián" },
+    "mùng Một": { en: "the first day of Lunar New Year", zh: "正月初一", py: "zhēngyuè chūyī" },
     "dì ghẻ": { en: "stepmother", zh: "继母", py: "jìmǔ" },
     "Bụt": { en: "the kind Buddha spirit (in folk tales)", zh: "佛仙（童话中的善良神仙）", py: "fóxiān" },
     "tôm tép": { en: "small shrimp", zh: "小虾", py: "xiǎo xiā" },

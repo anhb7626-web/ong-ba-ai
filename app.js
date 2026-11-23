@@ -254,7 +254,8 @@
     window.scrollTo(0, 0);
     if (screen === "parent") renderParent();
     if (screen === "stickers") renderStickers();
-    if (screen === "modes") setGreeting();
+    if (screen === "modes") { setGreeting(); renderAssigned(); }
+    if (screen === "teacher") renderTeacher();
     if (screen === "settings") renderSettings();
   }
   function back() {
@@ -282,7 +283,68 @@
     speak(`${x} đây! Hôm nay cháu muốn làm gì với ${x.toLowerCase()} nào?`);
   }
 
-  const MODE_NAMES = { stories: "📖 Kể chuyện cổ tích", chats: "🍚 Trò chuyện hằng ngày", rhymes: "🎶 Đồng dao – ca dao" };
+  const MODE_NAMES = { stories: "📖 Kể chuyện cổ tích", chats: "🍚 Trò chuyện hằng ngày", rhymes: "🎶 Đồng dao – ca dao", bedtime: "🌙 Nghe trước giờ ngủ" };
+
+  /* ===================== Bài của cô giáo + bài được giao ===================== */
+  const customs = () => store.get("custom", []);
+  const saveCustoms = (a) => store.set("custom", a);
+  function lessonsOf(mode) {
+    if (mode === "stories" || mode === "bedtime") return D.stories.concat(customs().filter((c) => c.kind !== "chat"));
+    if (mode === "chats") return D.chats.concat(customs().filter((c) => c.kind === "chat"));
+    return D[mode] || [];
+  }
+  function findLesson(mode, id) { return lessonsOf(mode).find((x) => x.id === id); }
+  function allLessons() {
+    return [["stories", "Truyện"], ["chats", "Trò chuyện"], ["rhymes", "Đồng dao, ca dao"]]
+      .flatMap(([m, label]) => lessonsOf(m).map((x) => ({ mode: m, id: x.id, title: x.title, label, custom: !!x.custom })));
+  }
+  const lessonKey = (mode, id) => (mode === "bedtime" ? "ngu-" : "") + id;
+  // mã hóa bài thành chuỗi đặt trong link (UTF-8 → base64url)
+  const b64e = (o) => btoa(String.fromCharCode(...new TextEncoder().encode(JSON.stringify(o)))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  const b64d = (t) => JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(t.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0))));
+  function baseUrl() { return location.origin + location.pathname; }
+  function assignLink(mode, id) {
+    const c = customs().find((x) => x.id === id);
+    return baseUrl() + "?giao=" + encodeURIComponent(mode + ":" + id) + (c ? "#bai=" + b64e(c) : "");
+  }
+  // Mở link cô giáo gửi: nhận bài được giao (và bài cô tự soạn nếu có)
+  (function readAssignment() {
+    try {
+      const q = new URLSearchParams(location.search).get("giao");
+      const h = location.hash.match(/bai=([\w-]+)/);
+      if (h) {
+        const c = sanitizeLesson(b64d(h[1]));
+        if (c) saveCustoms(customs().filter((x) => x.id !== c.id).concat(c));
+      }
+      if (q) {
+        const [mode, id] = q.split(":");
+        if (["stories", "chats", "rhymes"].includes(mode) && id) store.set("assigned", { mode, id, date: today() });
+      }
+      if (q || h) history.replaceState(null, "", baseUrl());
+    } catch (e) { console.warn("Link giao bài không đọc được", e); }
+  })();
+  function sanitizeLesson(o) {
+    if (!o || typeof o.title !== "string" || !Array.isArray(o.steps)) return null;
+    const str = (v, n = 400) => String(v || "").slice(0, n);
+    const steps = o.steps.slice(0, 60).map((st) => st.t === "ask"
+      ? { t: "ask", text: str(st.text), choices: (st.choices || []).slice(0, 4).map((c) => str(c, 120)), answer: 0, recast: str(st.recast) }
+      : { t: "say", text: str(st.text) }).filter((st) => st.text);
+    if (!steps.length) return null;
+    return { id: str(o.id, 40).replace(/[^\w-]/g, "") || "bai-" + Date.now(), title: str(o.title, 60), kind: o.kind === "chat" ? "chat" : "story",
+      custom: true, by: str(o.by, 40), steps, parentTips: (o.parentTips || []).slice(0, 3).map((t) => str(t, 160)) };
+  }
+  function renderAssigned() {
+    const box = $("#assigned");
+    const a = store.get("assigned", null);
+    const item = a && findLesson(a.mode, a.id);
+    if (!item) { box.hidden = true; return; }
+    const done = stats().lessons.some((l) => l.id === item.id && l.date >= a.date);
+    box.hidden = false;
+    box.innerHTML = `<span class="assigned-icon">${window.OBK_ART.icon(item.id) || window.OBK_ART.icon("teacher")}</span>
+      <span class="assigned-text"><small>Bài cô giao tuần này</small><b>${esc(item.title)}</b></span>
+      ${done ? '<span class="assigned-done">Đã học ✓</span>' : `<span class="assigned-go">Học ngay</span>`}`;
+    box.onclick = () => startSession(a.mode, item);
+  }
 
   function openMode(mode) {
     stopSpeak();
@@ -292,12 +354,13 @@
     const list = $("#item-list");
     list.innerHTML = "";
     const done = new Set(stats().lessons.map((l) => l.id));
-    D[mode].forEach((item) => {
+    lessonsOf(mode).forEach((item) => {
       const b = document.createElement("button");
-      b.className = "item";
-      const sub = mode === "rhymes" ? item.kind : mode === "stories" ? `${item.steps.length} lượt` : "Trò chuyện";
-      b.innerHTML = `<span class="item-emoji">${window.OBK_ART.icon(item.id) || item.emoji || "⭐"}</span><span>${esc(item.title)}<small>${esc(sub)}</small></span>` +
-        (done.has(item.id) ? '<span class="check" title="Đã học">✓</span>' : "");
+      b.className = "item" + (mode === "bedtime" ? " night-item" : "");
+      let sub = mode === "rhymes" ? item.kind : mode === "stories" ? `${item.steps.length} lượt` : mode === "bedtime" ? "Chỉ nghe, không cần trả lời" : "Trò chuyện";
+      if (item.custom) sub = "Bài của cô" + (item.by ? " " + item.by : "") + " · " + sub;
+      b.innerHTML = `<span class="item-emoji">${window.OBK_ART.icon(item.id) || window.OBK_ART.icon(item.custom ? "teacher" : "stories")}</span><span>${esc(item.title)}<small>${esc(sub)}</small></span>` +
+        (done.has(lessonKey(mode, item.id)) ? '<span class="check" title="Đã học">✓</span>' : "");
       b.onclick = () => startSession(mode, item);
       list.appendChild(b);
     });
@@ -315,6 +378,9 @@
   /* ===================== Dựng các lượt cho từng chế độ ===================== */
   function buildSteps(mode, item) {
     if (mode === "stories" || mode === "chats") return item.steps.slice();
+    if (mode === "bedtime") return [{ t: "say", text: "Cháu nằm xuống, nhắm mắt lại nhé. {Xc} kể chuyện " + item.title + " cho cháu nghe." }]
+      .concat(item.steps.filter((x) => x.t === "say"))
+      .concat([{ t: "say", text: "Hết truyện rồi. Chúc cháu ngủ ngon, mơ thật đẹp nhé!" }]);
     if (mode === "rhymes") {
       const steps = [{ t: "say", text: `Bây giờ {X} đọc ${item.kind.toLowerCase()} “${item.title}”. Cháu nghe trước nhé.` }];
       steps.push({ t: "poem", lines: item.lines });
@@ -359,10 +425,11 @@
       seen: new Set()
     };
     $("#session-title").textContent = s.title;
-    const scene = window.OBK_ART.scene(item && item.id, mode);
+    const scene = window.OBK_ART.scene(mode === "bedtime" ? null : item && item.id, mode);
     $("#log").innerHTML = scene ? `<div class="scene" aria-hidden="true">${scene}</div>` : "";
     $("#progress-bar").style.width = "0%";
     SND.style(mode === "quiz" || mode === "rhymes" ? "lively" : "calm");
+    document.body.classList.toggle("bedtime", mode === "bedtime");
     show("session");
     // đếm thời gian luyện
     clearInterval(tick);
@@ -374,6 +441,7 @@
   }
   function endSession() {
     clearInterval(tick); tick = null;
+    document.body.classList.remove("bedtime");
     SND.style("calm");
     stopSpeak();
     if (rec) { try { rec.stop(); } catch (e) {} }
@@ -436,7 +504,7 @@
     $$(".w", wrap).forEach((el) => (el.onclick = () => openWord(el.dataset.w)));
     $("#log").appendChild(wrap);
     scrollDown();
-    return { el: wrap, spoken: speak(say) };
+    return { el: wrap, spoken: speak(say, opts.force) };
   }
 
   function toggleMeanings(wrap, found, btn) {
@@ -655,6 +723,15 @@
     if (s.i >= s.steps.length) { finish(); return; }
     const step = s.steps[s.i];
     panel("");
+    if (s.mode === "bedtime") {
+      const p = panel(`<div class="btn-row"><button class="btn btn-ghost" id="btn-bt-stop">${IC.check} Dừng nghe</button></div>`);
+      $("#btn-bt-stop", p).onclick = () => { stopSpeak(); s.i = s.steps.length; finish(); };
+      await gpSay(step.text, { force: true }).spoken;
+      if (state.session !== s || s.i >= s.steps.length) return;
+      await wait(1400);
+      if (state.session === s) next();
+      return;
+    }
     if (step.t === "say") {
       gpSay(step.text);
       showContinue();
@@ -745,25 +822,34 @@
   function finish() {
     const s = state.session;
     const st = stats();
-    const lessonId = s.mode === "quiz" ? "quiz" : s.item.id;
+    const lessonId = s.mode === "quiz" ? "quiz" : lessonKey(s.mode, s.item.id);
     const firstTime = !st.lessons.some((l) => l.id === lessonId) || s.mode === "quiz";
     let award = null;
     if (firstTime) {
       award = window.OBK_ART.stickers.find((x) => !st.stickers.includes(x.id));
       if (award) st.stickers.push(award.id);
     }
-    st.lessons = [{ id: s.mode === "quiz" ? "quiz" : s.item.id, mode: s.mode, title: s.title, date: today() }]
-      .concat(st.lessons.filter((l) => l.id !== (s.mode === "quiz" ? "quiz" : s.item.id))).slice(0, 20);
+    st.lessons = [{ id: lessonId, mode: s.mode, title: s.title, date: today() }]
+      .concat(st.lessons.filter((l) => l.id !== lessonId)).slice(0, 20);
     saveStats(st);
     $("#progress-bar").style.width = "100%";
     SND.sfx("finish");
     let msg;
     if (s.mode === "quiz") msg = `Cháu trả lời đúng ${s.score} trên ${s.total} câu. ${s.score >= s.total - 1 ? "Giỏi quá!" : "Cháu học thêm là nhớ hết ngay!"} {Xc} thương cháu!`;
     else if (s.mode === "stories") msg = "Hết truyện rồi! Cháu nghe chăm chú lắm. Tối nay cháu kể lại cho bố mẹ nghe nhé!";
+    else if (s.mode === "bedtime") msg = "Ngủ ngon nhé cháu. Mai {X} kể chuyện khác cho cháu nghe.";
     else if (s.mode === "rhymes") msg = "Cháu đọc thuộc bài rồi đấy! Cháu đọc cho bố mẹ nghe nhé!";
     else msg = "{Xc} nói chuyện với cháu vui quá! Mai mình nói chuyện tiếp nhé.";
-    confetti();
+    if (s.mode !== "bedtime") confetti();
+    if (s.mode === "bedtime" && s.i < s.steps.length) { /* đã dừng giữa chừng */ }
     gpSay(msg, { cls: "praise" });
+    if (s.mode === "stories") {
+      const c = document.createElement("div");
+      c.className = "retell";
+      c.innerHTML = `<h4>${IC.book} Mang chuyện đến lớp</h4><p>Buổi học sau, cháu kể lại cho cô và các bạn nghe nhé:</p>
+        <ol><li>Truyện <b>${esc(s.item.title)}</b> có những ai?</li><li>Chuyện gì đã xảy ra?</li><li>Cuối truyện thế nào? Cháu thích đoạn nào nhất?</li></ol>`;
+      $("#log").appendChild(c);
+    }
     const p = panel(`<div class="btn-row">
       <button class="btn btn-big" id="btn-again">${IC.again} ${s.mode === "quiz" ? "Chơi lượt mới" : "Học lại bài này"}</button>
       <button class="btn btn-big btn-green" id="btn-other">${IC.grid} Chọn bài khác</button>
@@ -814,6 +900,14 @@
 
   function startAI() {
     const s = state.session;
+    if (!settings.aiNotice) {
+      const p = panel(`<div class="notice"><h4>${IC.family} Bố mẹ đọc giúp con nhé</h4>
+        <p>Ở phần này, lời con gõ hoặc nói sẽ được gửi đến máy chủ AI (Alibaba Cloud) để ông bà trả lời. Trạm trung gian không lưu lại. AI được dặn chỉ nói tiếng Việt, nói ngắn, không hỏi địa chỉ hay tên trường. Bố mẹ có thể tắt phần này trong Cài đặt.</p>
+        <div class="btn-row"><button class="btn btn-green" id="btn-ai-ok">${IC.check} Đồng ý, bắt đầu</button><button class="btn btn-ghost" id="btn-ai-no">Học theo bài soạn sẵn</button></div></div>`);
+      $("#btn-ai-ok", p).onclick = () => { settings.aiNotice = true; saveSettings(); panel(""); startAI(); };
+      $("#btn-ai-no", p).onclick = () => openMode("chats");
+      return;
+    }
     const hello = fill("Cháu ơi, hôm nay cháu muốn kể gì cho {X} nghe nào?");
     s.ai.push({ role: "assistant", content: hello });
     gpSay(hello);
@@ -850,6 +944,75 @@
       }
     });
     $("#btn-ai-end").onclick = () => { state.session.steps = [1]; state.session.i = 0; finish(); };
+  }
+
+  /* ===================== Góc giáo viên ===================== */
+  function parseLesson(title, text, kind, tips, by) {
+    const steps = [];
+    text.split(/\n+/).map((l) => l.trim()).filter(Boolean).forEach((l) => {
+      if (l.startsWith("?")) {
+        const parts = l.slice(1).split("|").map((x) => x.trim()).filter(Boolean);
+        if (parts.length >= 3) steps.push({ t: "ask", text: parts[0], choices: parts.slice(1, 5), answer: 0, recast: `À, ${parts[1].replace(/[.!]$/, "")} cháu ạ.` });
+        else if (parts.length) steps.push({ t: "say", text: parts.join(" ") });
+      } else steps.push({ t: "say", text: l });
+    });
+    const slug = norm(title).replace(/\s+/g, "-").slice(0, 30) || "bai";
+    return sanitizeLesson({ id: "co-" + slug, title, kind, by, steps, parentTips: tips.split(/\n+/).map((x) => x.trim()).filter(Boolean) });
+  }
+  function renderTeacher() {
+    const sel = $("#t-assign");
+    sel.innerHTML = allLessons().map((l) => `<option value="${l.mode}:${esc(l.id)}">${esc(l.label)}: ${esc(l.title)}${l.custom ? " (bài của cô)" : ""}</option>`).join("");
+    const upd = () => { const [m, id] = sel.value.split(":"); $("#t-link").value = assignLink(m, id); };
+    sel.onchange = upd; upd();
+    const list = $("#t-mine");
+    const mine = customs();
+    list.innerHTML = mine.length ? "" : '<p class="muted">Cô chưa soạn bài nào.</p>';
+    mine.forEach((c) => {
+      const row = document.createElement("div");
+      row.className = "mine-row";
+      row.innerHTML = `<span><b>${esc(c.title)}</b><small>${c.kind === "chat" ? "Trò chuyện" : "Truyện"} · ${c.steps.length} lượt</small></span>
+        <button class="chip" data-a="code">Mã cho data.js</button><button class="chip" data-a="del">Xóa</button>`;
+      row.querySelector('[data-a="del"]').onclick = () => { if (confirm("Xóa bài “" + c.title + "”?")) { saveCustoms(customs().filter((x) => x.id !== c.id)); renderTeacher(); } };
+      row.querySelector('[data-a="code"]').onclick = () => {
+        const { custom, by, ...rest } = c;
+        copyText(JSON.stringify(rest, null, 2) + ",", "Đã chép mã. Dán vào mục stories hoặc chats trong data.js.");
+      };
+      list.appendChild(row);
+    });
+  }
+  function copyText(t, okMsg) {
+    const done = () => { $("#t-status").textContent = okMsg; };
+    if (navigator.clipboard) navigator.clipboard.writeText(t).then(done, () => prompt("Chép đoạn này:", t));
+    else prompt("Chép đoạn này:", t);
+  }
+  function bindTeacher() {
+    $("#btn-teacher").onclick = () => show("teacher");
+    $("#btn-t-copy").onclick = () => copyText($("#t-link").value, "Đã chép link. Gửi link này vào nhóm Zalo, Facebook của lớp nhé.");
+    $("#btn-t-preview").onclick = () => {
+      const c = parseLesson($("#t-title").value.trim() || "Bài mới", $("#t-body").value, $("#t-kind").value, $("#t-tips").value, $("#t-by").value.trim());
+      if (!c) { $("#t-status").textContent = "Bài chưa có câu nào."; return; }
+      startSession(c.kind === "chat" ? "chats" : "stories", c);
+    };
+    $("#btn-t-save").onclick = () => {
+      const title = $("#t-title").value.trim();
+      const c = parseLesson(title, $("#t-body").value, $("#t-kind").value, $("#t-tips").value, $("#t-by").value.trim());
+      if (!title || !c) { $("#t-status").textContent = "Cô điền tên bài và ít nhất một câu nhé."; return; }
+      saveCustoms(customs().filter((x) => x.id !== c.id).concat(c));
+      $("#t-status").textContent = "Đã lưu bài “" + title + "”. Bài hiện trong mục " + (c.kind === "chat" ? "Trò chuyện hằng ngày" : "Kể chuyện cổ tích") + ", và cô có thể giao bài ở trên.";
+      renderTeacher();
+      $("#t-assign").value = (c.kind === "chat" ? "chats" : "stories") + ":" + c.id; $("#t-assign").onchange();
+    };
+    $("#btn-t-sample").onclick = () => {
+      $("#t-title").value = "Sự tích bánh chưng bánh giầy";
+      $("#t-kind").value = "story";
+      $("#t-body").value = ["Ngày xưa, vua Hùng muốn chọn người nối ngôi. Vua bảo các con tìm món ngon nhất để dâng lên.",
+        "Các hoàng tử đi khắp nơi tìm của ngon vật lạ. Riêng Lang Liêu nhà nghèo, chỉ có gạo nếp và đậu xanh.",
+        "? Lang Liêu có những gì? | Gạo nếp và đậu xanh | Vàng bạc | Ngọc ngà",
+        "Lang Liêu nằm mơ thấy thần dặn: lấy gạo làm bánh. Chàng làm bánh vuông tượng trưng cho đất, bánh tròn tượng trưng cho trời.",
+        "? Bánh vuông tượng trưng cho gì? | Đất | Trời | Mặt trăng",
+        "Vua nếm bánh, khen ngon và ý nghĩa, rồi truyền ngôi cho Lang Liêu. Từ đó, Tết nào người Việt cũng gói bánh chưng."].join("\n");
+      $("#t-tips").value = "Bánh chưng hình gì hả con?\nVì sao vua chọn Lang Liêu?\nTết này mình cùng gói bánh chưng nhé!";
+    };
   }
 
   /* ===================== Góc phụ huynh ===================== */
@@ -945,6 +1108,8 @@
         } else { add(st.text); add(st.recast); add(st.yes); add(st.reply); }
       });
     }));
+    D.stories.forEach((item) => buildSteps("bedtime", item).forEach((st) => add(st.text)));
+    add("Ngủ ngon nhé cháu. Mai {X} kể chuyện khác cho cháu nghe.");
     add("Mình chơi đố vui nhé! {Xc} đố cháu " + (D.quizPerRound || 5) + " câu.");
     D.quizzes.forEach((q) => { add(q.q); add("À, đáp án là: " + q.choices[q.answer] + ". " + q.explain); add(q.explain); });
     for (let n = 1; n <= (D.quizPerRound || 5); n++) add("Câu " + n + ":");
@@ -1038,6 +1203,7 @@
   }, true);
 
   bind();
+  bindTeacher();
   const nameEl = $("#kid-name");
   nameEl.value = settings.name || "";
   nameEl.oninput = () => { settings.name = nameEl.value.trim().slice(0, 20); saveSettings(); };

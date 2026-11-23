@@ -80,11 +80,13 @@
         <div class="char-mini" data-svg="current"></div>
         <p class="bubble-static" id="greet-text"></p>
       </div>
+      <button class="assigned" id="assigned" hidden></button>
       <div class="mode-grid">
         <button class="mode-card m-story" data-mode="stories"><span class="mode-icon" data-icon="stories"></span><span class="mode-name">Kể chuyện cổ tích</span><span class="mode-sub">Tấm Cám, Cây khế…</span></button>
         <button class="mode-card m-chat" data-mode="chats"><span class="mode-icon" data-icon="chats"></span><span class="mode-name">Trò chuyện hằng ngày</span><span class="mode-sub">Bữa cơm, đi học, gia đình</span></button>
         <button class="mode-card m-rhyme" data-mode="rhymes"><span class="mode-icon" data-icon="rhymes"></span><span class="mode-name">Đồng dao, ca dao</span><span class="mode-sub">Nghe, đọc theo, hiểu nghĩa</span></button>
         <button class="mode-card m-quiz" data-mode="quiz"><span class="mode-icon" data-icon="quiz"></span><span class="mode-name">Đố vui văn hóa</span><span class="mode-sub">Tết, áo dài, món ăn</span></button>
+        <button class="mode-card m-bed" data-mode="bedtime"><span class="mode-icon" data-icon="bedtime"></span><span class="mode-name">Nghe trước giờ ngủ</span><span class="mode-sub">Nhắm mắt, nghe ông bà kể</span></button>
       </div>
       <div class="mode-foot">
         <button class="sticker-btn" id="btn-stickers"><span class="sticker-btn-art" data-sticker="ga"></span><span>Sổ nhãn dán <b id="sticker-count">0/8</b></span></button>
@@ -149,8 +151,47 @@
         <h3>Bài học gần đây</h3>
         <ul class="recent" id="recent"></ul>
       </div>
+      <div class="card teacher-cta">
+        <h3>Dành cho thầy cô</h3>
+        <p class="muted">Giao bài cho cả lớp bằng một đường link, hoặc tự soạn truyện mới.</p>
+        <button class="btn btn-green" id="btn-teacher">Mở Góc giáo viên</button>
+      </div>
       <p class="muted small">Dữ liệu chỉ lưu trên máy này (localStorage), không gửi đi đâu.</p>
       <button class="btn btn-ghost" id="btn-reset">Xóa dữ liệu luyện tập</button>
+    </section>
+
+    <!-- Góc giáo viên -->
+    <section class="screen" id="screen-teacher" hidden>
+      <h2 class="screen-title">Góc giáo viên</h2>
+      <p class="muted parent-sub">Cô soạn nội dung, ông bà kể ở nhà, cháu kể lại trên lớp.</p>
+      <div class="card">
+        <h3>1. Giao bài tuần này</h3>
+        <p class="muted">Chọn bài rồi gửi link vào nhóm phụ huynh. Khi mở link, bài sẽ hiện ngay ở màn hình chính của cháu.</p>
+        <label class="field"><span>Bài</span><select id="t-assign"></select></label>
+        <label class="field"><span>Link gửi phụ huynh</span><input id="t-link" type="url" readonly></label>
+        <button class="btn" id="btn-t-copy">Chép link</button>
+      </div>
+      <div class="card">
+        <h3>2. Soạn bài mới</h3>
+        <p class="muted">Mỗi dòng là một câu ông bà kể. Dòng câu hỏi bắt đầu bằng dấu <b>?</b>, các ý cách nhau bằng dấu <b>|</b>, đáp án đúng đặt ngay sau câu hỏi:<br><code>? Lang Liêu có những gì? | Gạo nếp và đậu xanh | Vàng bạc</code></p>
+        <label class="field"><span>Tên bài</span><input id="t-title" type="text" maxlength="60" placeholder="Ví dụ: Sự tích bánh chưng"></label>
+        <div class="field-row">
+          <label class="field"><span>Loại bài</span><select id="t-kind"><option value="story">Truyện</option><option value="chat">Trò chuyện</option></select></label>
+          <label class="field"><span>Người soạn</span><input id="t-by" type="text" maxlength="40" placeholder="Ví dụ: cô Lan"></label>
+        </div>
+        <label class="field"><span>Nội dung</span><textarea id="t-body" rows="8" lang="vi"></textarea></label>
+        <label class="field"><span>Ba câu gợi ý cho bố mẹ (mỗi dòng một câu)</span><textarea id="t-tips" rows="3" lang="vi"></textarea></label>
+        <div class="btn-row">
+          <button class="btn btn-ghost" id="btn-t-sample">Điền bài mẫu</button>
+          <button class="btn btn-ghost" id="btn-t-preview">Nghe thử</button>
+          <button class="btn btn-green" id="btn-t-save">Lưu bài</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3>3. Bài cô đã soạn</h3>
+        <div id="t-mine"></div>
+      </div>
+      <p class="muted small" id="t-status" role="status"></p>
     </section>
 
     <!-- 6. Cài đặt -->
