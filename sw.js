@@ -3,7 +3,8 @@
    File giọng đọc (audio/): lưu lại sau lần nghe đầu tiên. */
 const CACHE = "obk-v12";
 const SHELL = ["./", "index.html", "style.css", "app.js", "data.js", "config.js", "characters.js", "art.js",
-  "sound.js", "audio-manifest.js", "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png"];
+  "sound.js", "audio-manifest.js", "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png",
+  "fonts/fonts.css", "fonts/nunito-vietnamese.woff2", "fonts/nunito-latin.woff2", "fonts/chonburi-vietnamese.woff2", "fonts/chonburi-latin.woff2"];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
