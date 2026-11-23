@@ -1,8 +1,6 @@
 /*
- * Hình minh họa Ông và Bà, vẽ đời thường như ông bà thật của các cháu hôm nay
- * (ông tóc bạc, kính tròn, áo len; bà tóc uốn muối tiêu, áo bà ba hoa),
- * giữ nét tranh dân gian Đông Hồ:
- * nét viền đậm, màu phẳng đỏ – vàng – xanh trên nền giấy điệp.
+ * Hình minh họa Ông và Bà (SVG tự vẽ, lấy cảm hứng tranh dân gian Đông Hồ:
+ * nét viền đậm, màu phẳng đỏ – vàng – xanh trên nền giấy điệp).
  * Các lớp dùng cho cử động:
  *   .head        – đầu (nghiêng khi nghe, gật khi nhắc lại, nhún khi vui)
  *   .eyes-open   – mắt thường (chớp mắt)
@@ -76,102 +74,73 @@
         <path d="M148 92 q4 -2 7 1 M147 99 q4 -2 8 1" stroke="#c98f63" stroke-width="1.3" fill="none" stroke-linecap="round"/>
       </g>`;
 
-  /* ---------- Ông, đời thường: tóc bạc ngắn, kính tròn, ria bạc, sơ mi + áo len ---------- */
   const ong = frame("#b3261e", "#e9b949").replace("__BODY__", `
-    <!-- áo len cài khuy, sơ mi trắng bên trong -->
-    <path d="M26 206 C30 156 62 134 100 134 C138 134 170 156 174 206Z" fill="#4f6391" stroke="${INK}" stroke-width="3"/>
-    <path d="M80 136 L100 184 L120 136Z" fill="#fdf6e3" stroke="${INK}" stroke-width="2.5" stroke-linejoin="round"/>
-    <path d="M86 132 L100 150 L78 150Z" fill="#fffdf6" stroke="${INK}" stroke-width="2.2" stroke-linejoin="round"/>
-    <path d="M114 132 L100 150 L122 150Z" fill="#fffdf6" stroke="${INK}" stroke-width="2.2" stroke-linejoin="round"/>
-    <circle cx="100" cy="194" r="3" fill="#d99a1c" stroke="${INK}" stroke-width="1.3"/>
-    <path d="M56 176 q8 -4 14 2 M144 176 q-8 -4 -14 2" stroke="#3b4c78" stroke-width="2" fill="none" stroke-linecap="round"/>
-    <path d="M62 196 h10 M128 196 h10" stroke="#3b4c78" stroke-width="2" stroke-linecap="round"/>
+    <!-- áo dài the, cổ trắng -->
+    <path d="M26 206 C30 156 62 134 100 134 C138 134 170 156 174 206Z" fill="#2f3e66" stroke="${INK}" stroke-width="3"/>
+    <path d="M100 136 C114 150 128 160 146 168" stroke="${INK}" stroke-width="2.5" fill="none"/>
+    <circle cx="122" cy="154" r="2.6" fill="#e9b949" stroke="${INK}" stroke-width="1"/>
+    <circle cx="136" cy="162" r="2.6" fill="#e9b949" stroke="${INK}" stroke-width="1"/>
+    <path d="M58 170 q10 -6 18 4 M142 186 q-8 -8 -18 0" stroke="#4b5b88" stroke-width="2" fill="none"/>
+    <path d="M84 134 Q100 148 116 134 L113 127 Q100 139 87 127Z" fill="#fff" stroke="${INK}" stroke-width="2"/>
     <rect x="90" y="118" width="20" height="16" rx="6" fill="#e2ad7f" stroke="${INK}" stroke-width="2"/>
     <g class="head">
       <ellipse cx="62" cy="98" rx="7" ry="10" fill="#efbf90" stroke="${INK}" stroke-width="2.5"/>
       <ellipse cx="138" cy="98" rx="7" ry="10" fill="#efbf90" stroke="${INK}" stroke-width="2.5"/>
       <ellipse cx="100" cy="94" rx="38" ry="42" fill="#f4c99c" stroke="${INK}" stroke-width="3"/>
-      <!-- tóc bạc ngắn, trán hói nhẹ -->
-      <path d="M61 96 C56 66 74 50 100 50 C126 50 144 66 139 96 C136 84 132 76 126 72 C118 64 108 62 100 62 C92 62 82 64 74 72 C68 76 64 84 61 96Z" fill="#ece7de" stroke="${INK}" stroke-width="2.6" stroke-linejoin="round"/>
-      <path d="M70 68 q6 -6 12 -6 M118 62 q8 2 12 8 M92 56 q8 -2 16 0" stroke="#b9b1a4" stroke-width="1.8" fill="none" stroke-linecap="round"/>
-      <!-- nếp trán -->
-      <path d="M86 72 q14 -4 28 0" stroke="#d29a6e" stroke-width="1.6" fill="none" stroke-linecap="round"/>
-      <!-- lông mày bạc rậm -->
-      <path d="M73 80 Q83 74 94 79" stroke="#9a9286" stroke-width="5" fill="none" stroke-linecap="round"/>
-      <path d="M106 79 Q117 74 127 80" stroke="#9a9286" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <!-- khăn xếp -->
+      <path d="M60 82 C58 52 78 38 100 38 C122 38 142 52 140 82 C128 72 114 69 100 69 C86 69 72 72 60 82Z" fill="#1f1a17" stroke="${INK}" stroke-width="3"/>
+      <path d="M64 70 C78 58 122 58 136 70" stroke="#5a4c42" stroke-width="2.2" fill="none"/>
+      <path d="M68 60 C82 50 118 50 132 60" stroke="#5a4c42" stroke-width="2.2" fill="none"/>
+      <path d="M76 50 C88 44 112 44 124 50" stroke="#5a4c42" stroke-width="2.2" fill="none"/>
+      <!-- lông mày bạc -->
+      <path d="M74 84 Q84 76 94 82" stroke="#fffaf0" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <path d="M74 84 Q84 76 94 82" stroke="${INK}" stroke-width="1" fill="none" opacity=".4"/>
+      <path d="M106 82 Q116 76 126 84" stroke="#fffaf0" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <path d="M106 82 Q116 76 126 84" stroke="${INK}" stroke-width="1" fill="none" opacity=".4"/>
       ${eyes(94)}
-      <!-- kính tròn -->
-      <g fill="none" stroke="${INK}" stroke-width="2.4">
-        <circle cx="85" cy="94" r="11.5" fill="#fff" fill-opacity=".22"/>
-        <circle cx="115" cy="94" r="11.5" fill="#fff" fill-opacity=".22"/>
-        <path d="M96.5 92 Q100 88.5 103.5 92"/>
-        <path d="M73.5 92 L63 89 M126.5 92 L137 89"/>
-      </g>
-      <path d="M78 88 l4 -3 M108 88 l4 -3" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".8"/>
-      <circle cx="73" cy="110" r="6.5" fill="#e0533f" opacity=".42"/>
-      <circle cx="127" cy="110" r="6.5" fill="#e0533f" opacity=".42"/>
-      <path d="M97 99 Q100 109 104 105" stroke="${INK}" stroke-width="2" fill="none" stroke-linecap="round"/>
-      <!-- miệng cười + ria bạc ngắn -->
-      <path d="M88 119 Q100 129 112 119" stroke="${INK}" stroke-width="2.4" fill="none" stroke-linecap="round"/>
-      <ellipse class="mouth" cx="100" cy="121.5" rx="5.5" ry="2.4" fill="#8b2e22" stroke="${INK}" stroke-width="1.2"/>
-      <path d="M100 113 C94 110 86 111 82 116 C88 116 95 117 100 116 C105 117 112 116 118 116 C114 111 106 110 100 113Z" fill="#ece7de" stroke="${INK}" stroke-width="1.8"/>
-      <path d="M83 124 q-3 3 -2 7 M117 124 q3 3 2 7" stroke="#d29a6e" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-      ${earHand("#4f6391")}
+      <circle cx="74" cy="108" r="6.5" fill="#e0533f" opacity=".45"/>
+      <circle cx="126" cy="108" r="6.5" fill="#e0533f" opacity=".45"/>
+      <path d="M97 98 Q100 108 104 104" stroke="${INK}" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <!-- râu dài -->
+      <path d="M82 116 C80 140 92 160 100 176 C108 160 120 140 118 116 C110 124 90 124 82 116Z" fill="#fffaf0" stroke="${INK}" stroke-width="2.5"/>
+      <path d="M92 132 Q96 148 100 160 M108 132 Q104 148 100 160" stroke="#d8cfc0" stroke-width="1.5" fill="none"/>
+      <ellipse class="mouth" cx="100" cy="121" rx="6" ry="2.6" fill="#8b2e22" stroke="${INK}" stroke-width="1.2"/>
+      <path d="M100 114 C94 110 84 112 78 118 C86 116 94 118 100 117 C106 118 114 116 122 118 C116 112 106 110 100 114Z" fill="#fffaf0" stroke="${INK}" stroke-width="2"/>
+      ${earHand("#2f3e66")}
     </g>
-    ${extras("#4f6391")}`) + ponder;
+    ${extras("#2f3e66")}`) + ponder;
 
-  /* ---------- Bà, đời thường: tóc uốn muối tiêu, áo bà ba hoa nhỏ, dây chuyền ngọc ---------- */
-  /* tóc uốn: vòng xoăn viền ngoài + khối tóc phủ lên, mái xoăn trên trán */
-  const HAIR = "#8f877e", HL = "#cfc8bd";
-  const rim = [[57,110],[54,94],[57,78],[64,64],[75,53],[89,46],[100,44],[111,46],[125,53],[136,64],[143,78],[146,94],[143,110]]
-    .map(([x, y]) => `<circle cx="${x}" cy="${y}" r="9.5" fill="${HAIR}" stroke="${INK}" stroke-width="2.4"/>`).join("");
-  const hairBack = rim + `<path d="M60 112 C52 92 54 64 76 54 C88 48 112 48 124 54 C146 64 148 92 140 112Z" fill="${HAIR}"/>`;
-  const fringe = `<path d="M64 94 Q63 80 74 79 Q77 69 88 71 Q93 63 102 66 Q110 62 115 70 Q126 69 127 79 Q137 81 136 94 C136 64 120 52 100 52 C80 52 64 64 64 94Z" fill="${HAIR}" stroke="${INK}" stroke-width="2.4" stroke-linejoin="round"/>
-      <g stroke="${HL}" stroke-width="2" fill="none" stroke-linecap="round">
-        <path d="M80 74 q4 -4 8 0"/><path d="M97 67 q4 -4 8 0"/><path d="M114 73 q4 -4 8 0"/>
-        <path d="M66 62 q4 -4 8 0"/><path d="M90 50 q4 -4 8 0"/><path d="M112 50 q4 -4 8 0"/><path d="M128 60 q4 -4 8 0"/>
-        <path d="M56 92 q3 -4 7 -1"/><path d="M138 90 q3 -4 7 -1"/>
-      </g>`;
   const ba = frame("#3f7d4e", "#c0392b").replace("__BODY__", `
-    <defs>
-      <pattern id="hoa-baba" width="16" height="16" patternUnits="userSpaceOnUse">
-        <rect width="16" height="16" fill="#c9667f"/>
-        <g fill="#fbe3e9"><circle cx="4" cy="4" r="1.4"/><circle cx="6.4" cy="4" r="1.4"/><circle cx="5.2" cy="2" r="1.4"/><circle cx="5.2" cy="6" r="1.4"/></g>
-        <circle cx="5.2" cy="4" r="1" fill="#e9b949"/>
-        <g fill="#fbe3e9"><circle cx="12" cy="12" r="1.2"/><circle cx="14" cy="12" r="1.2"/><circle cx="13" cy="10.4" r="1.2"/><circle cx="13" cy="13.6" r="1.2"/></g>
-        <circle cx="13" cy="12" r=".8" fill="#e9b949"/>
-      </pattern>
-    </defs>
-    <!-- áo bà ba hoa nhỏ, cổ tròn, hàng khuy giữa -->
-    <path d="M26 206 C30 156 62 134 100 134 C138 134 170 156 174 206Z" fill="url(#hoa-baba) #c9667f" stroke="${INK}" stroke-width="3"/>
-    <path d="M84 134 Q100 148 116 134" fill="#e2ad7f" stroke="${INK}" stroke-width="2.4"/>
-    <path d="M100 146 L100 206" stroke="${INK}" stroke-width="2" opacity=".55"/>
-    <g fill="#fdf6e3" stroke="${INK}" stroke-width="1.2"><circle cx="100" cy="160" r="2.4"/><circle cx="100" cy="176" r="2.4"/><circle cx="100" cy="192" r="2.4"/></g>
-    <!-- dây chuyền mặt ngọc -->
-    <path d="M87 135 Q100 152 113 135" stroke="#d99a1c" stroke-width="1.6" fill="none"/>
-    <path d="M100 145 q-4 5 0 10 q4 -5 0 -10z" fill="#4f9a5e" stroke="${INK}" stroke-width="1.3"/>
+    <!-- áo tứ thân, yếm đỏ, thắt lưng xanh -->
+    <path d="M26 206 C30 156 62 134 100 134 C138 134 170 156 174 206Z" fill="#8a5a2b" stroke="${INK}" stroke-width="3"/>
+    <path d="M86 134 L100 166 L114 134Z" fill="#c0392b" stroke="${INK}" stroke-width="2.5"/>
+    <path d="M70 140 C80 160 88 176 92 206 M130 140 C120 160 112 176 108 206" stroke="${INK}" stroke-width="2.5" fill="none"/>
+    <path d="M60 186 Q100 176 140 186 L142 196 Q100 186 58 196Z" fill="#4f9a5e" stroke="${INK}" stroke-width="2.5"/>
     <rect x="90" y="118" width="20" height="16" rx="6" fill="#e2ad7f" stroke="${INK}" stroke-width="2"/>
     <g class="head">
-      ${hairBack}
-      <ellipse cx="62" cy="101" rx="7" ry="10" fill="#efbf90" stroke="${INK}" stroke-width="2.5"/>
-      <ellipse cx="138" cy="101" rx="7" ry="10" fill="#efbf90" stroke="${INK}" stroke-width="2.5"/>
-      <circle cx="61" cy="114" r="3.4" fill="#4f9a5e" stroke="${INK}" stroke-width="1.5"/>
-      <circle cx="139" cy="114" r="3.4" fill="#4f9a5e" stroke="${INK}" stroke-width="1.5"/>
-      <ellipse cx="100" cy="97" rx="36" ry="40" fill="#f4c99c" stroke="${INK}" stroke-width="3"/>
-      ${fringe}
-      <path d="M77 85 Q85 80 93 84" stroke="#5d544c" stroke-width="3.2" fill="none" stroke-linecap="round"/>
-      <path d="M107 84 Q115 80 123 85" stroke="#5d544c" stroke-width="3.2" fill="none" stroke-linecap="round"/>
+      <ellipse cx="62" cy="100" rx="7" ry="10" fill="#efbf90" stroke="${INK}" stroke-width="2.5"/>
+      <ellipse cx="138" cy="100" rx="7" ry="10" fill="#efbf90" stroke="${INK}" stroke-width="2.5"/>
+      <circle cx="61" cy="114" r="3.6" fill="#e9b949" stroke="${INK}" stroke-width="1.5"/>
+      <circle cx="139" cy="114" r="3.6" fill="#e9b949" stroke="${INK}" stroke-width="1.5"/>
+      <ellipse cx="100" cy="96" rx="37" ry="41" fill="#f4c99c" stroke="${INK}" stroke-width="3"/>
+      <!-- tóc bạc ở thái dương -->
+      <path d="M64 92 C64 78 70 72 78 70 M136 92 C136 78 130 72 122 70" stroke="#c9c2b8" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <!-- khăn mỏ quạ -->
+      <path d="M58 90 C54 60 74 42 100 40 C126 42 146 60 142 90 C136 78 120 70 106 68 L100 58 L94 68 C80 70 64 78 58 90Z" fill="#1f1a17" stroke="${INK}" stroke-width="3"/>
+      <path d="M86 44 L100 18 L114 44Z" fill="#1f1a17" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M70 66 C84 54 116 54 130 66" stroke="#4a3f38" stroke-width="2" fill="none"/>
+      <path d="M76 86 Q85 80 93 84" stroke="#6f655c" stroke-width="3.2" fill="none" stroke-linecap="round"/>
+      <path d="M107 84 Q115 80 124 86" stroke="#6f655c" stroke-width="3.2" fill="none" stroke-linecap="round"/>
       ${eyes(96)}
-      <!-- vết chân chim khi cười -->
-      <path d="M72 94 l-4 -2 M72 98 l-4 1 M128 94 l4 -2 M128 98 l4 1" stroke="#cf9a74" stroke-width="1.5" stroke-linecap="round"/>
-      <circle cx="75" cy="111" r="7" fill="#e0533f" opacity=".45"/>
-      <circle cx="125" cy="111" r="7" fill="#e0533f" opacity=".45"/>
+      <path d="M77 103 Q81 106 85 104 M123 103 Q119 106 115 104" stroke="#cf9a74" stroke-width="1.6" fill="none"/>
+      <circle cx="74" cy="111" r="7" fill="#e0533f" opacity=".45"/>
+      <circle cx="126" cy="111" r="7" fill="#e0533f" opacity=".45"/>
       <path d="M97 100 Q100 110 104 106" stroke="${INK}" stroke-width="2" fill="none" stroke-linecap="round"/>
-      <path d="M86 117 Q100 129 114 117" stroke="${INK}" stroke-width="2.5" fill="#d0574a" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M86 117 Q100 129 114 117" stroke="${INK}" stroke-width="2.5" fill="#c0392b" stroke-linecap="round"/>
       <ellipse class="mouth" cx="100" cy="121" rx="5.5" ry="2.4" fill="#8b2e22" stroke="${INK}" stroke-width="1.2"/>
-      ${earHand("#c9667f")}
+      ${earHand("#8a5a2b")}
     </g>
-    ${extras("#c9667f")}`) + ponder;
+    ${extras("#8a5a2b")}`) + ponder;
 
   window.OBK_SVG = {
     ong: `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ông">${ong}</svg>`,
