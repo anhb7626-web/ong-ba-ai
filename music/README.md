@@ -12,3 +12,8 @@ An toàn nhất:
   lời và giai điệu thuộc về cộng đồng, nhưng **bản ghi âm** của người khác vẫn có bản quyền,
   nên tự hát hoặc nhờ người nhà, học sinh hát rồi thu lại.
 - Nhạc có giấy phép mở (Creative Commons, ghi rõ nguồn).
+
+## Đang dùng
+- `buom-vang-em.mp3` (kể chuyện, giờ ngủ) và `buom-vang-vui.mp3` (đố vui, đồng dao): giai điệu
+  "Kìa con bướm vàng" (dân gian Pháp *Frère Jacques*, thuộc phạm vi công cộng), phối khí tự tạo
+  bằng `tools/nhac-nen/buom.py` (cần Python + numpy + ffmpeg). Không dùng bản ghi âm của ai.
