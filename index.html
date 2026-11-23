@@ -5,38 +5,54 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Ông Bà Kể</title>
   <meta name="description" content="Ông Bà Kể – trợ lý luyện nói tiếng Việt cho trẻ em gốc Việt ở nước ngoài.">
-  <meta name="theme-color" content="#b3261e">
+  <meta name="theme-color" content="#f7ecd2">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%23f2b632'/%3E%3Ctext x='32' y='44' font-size='34' text-anchor='middle'%3E%F0%9F%8F%AE%3C/text%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header class="topbar">
-    <button class="icon-btn" id="btn-back" aria-label="Quay lại" hidden>‹</button>
-    <h1 class="brand" id="brand">🏮 Ông Bà Kể</h1>
+    <button class="icon-btn" id="btn-back" aria-label="Quay lại" hidden>
+      <svg viewBox="0 0 24 24"><path d="M15 5 L8 12 L15 19" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <button class="brand" id="brand"><span class="brand-mark" aria-hidden="true"></span>Ông Bà Kể</button>
     <div class="top-actions">
-      <button class="icon-btn" id="btn-parent" aria-label="Góc phụ huynh" title="Góc phụ huynh">👪</button>
-      <button class="icon-btn" id="btn-settings" aria-label="Cài đặt" title="Cài đặt">⚙️</button>
+      <button class="icon-btn" id="btn-parent" aria-label="Góc phụ huynh" title="Góc phụ huynh">
+        <svg viewBox="0 0 24 24"><circle cx="8" cy="7" r="3" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="17" cy="9" r="2.4" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M2.5 20 c0-4 2.5-7 5.5-7 s5.5 3 5.5 7 M13 20 c.3-3 2-5 4-5 s3.8 2 4 5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+      </button>
+      <button class="icon-btn" id="btn-settings" aria-label="Cài đặt" title="Cài đặt">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M12 2.5v3 M12 18.5v3 M2.5 12h3 M18.5 12h3 M5.3 5.3l2.1 2.1 M16.6 16.6l2.1 2.1 M5.3 18.7l2.1-2.1 M16.6 7.4l2.1-2.1" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+      </button>
     </div>
   </header>
 
   <main id="app">
     <!-- 1. Chọn nhân vật -->
     <section class="screen" id="screen-home">
+      <div class="hero">
+        <div class="hero-art" id="hero-art"></div>
+        <div class="hero-text">
+          <h1 class="hero-title">Ông Bà Kể</h1>
+          <p class="hero-sub">Nghe ông bà kể chuyện, tập nói tiếng Việt</p>
+        </div>
+      </div>
       <p class="lead">Cháu muốn trò chuyện với ai nào?</p>
       <div class="char-pick">
-        <button class="char-card" data-char="ong">
+        <button class="char-card scroll" data-char="ong">
+          <span class="rod" aria-hidden="true"></span>
           <div class="char-art" data-svg="ong"></div>
           <span class="char-name">Ông</span>
+          <span class="char-note">Giọng trầm, hay kể chuyện</span>
         </button>
-        <button class="char-card" data-char="ba">
+        <button class="char-card scroll" data-char="ba">
+          <span class="rod" aria-hidden="true"></span>
           <div class="char-art" data-svg="ba"></div>
           <span class="char-name">Bà</span>
+          <span class="char-note">Giọng hiền, thuộc nhiều đồng dao</span>
         </button>
       </div>
-      <p class="hint">Bấm vào ông hoặc bà để bắt đầu.</p>
     </section>
 
     <!-- 2. Chọn chế độ -->
@@ -46,10 +62,10 @@
         <p class="bubble-static" id="greet-text"></p>
       </div>
       <div class="mode-grid">
-        <button class="mode-card m-story" data-mode="stories"><span class="mode-emoji">📖</span><span>Kể chuyện cổ tích</span></button>
-        <button class="mode-card m-chat" data-mode="chats"><span class="mode-emoji">🍚</span><span>Trò chuyện hằng ngày</span></button>
-        <button class="mode-card m-rhyme" data-mode="rhymes"><span class="mode-emoji">🎶</span><span>Đồng dao – ca dao</span></button>
-        <button class="mode-card m-quiz" data-mode="quiz"><span class="mode-emoji">🏮</span><span>Đố vui văn hóa</span></button>
+        <button class="mode-card m-story" data-mode="stories"><span class="mode-icon" data-icon="stories"></span><span class="mode-name">Kể chuyện cổ tích</span><span class="mode-sub">Tấm Cám, Cây khế…</span></button>
+        <button class="mode-card m-chat" data-mode="chats"><span class="mode-icon" data-icon="chats"></span><span class="mode-name">Trò chuyện hằng ngày</span><span class="mode-sub">Bữa cơm, đi học, gia đình</span></button>
+        <button class="mode-card m-rhyme" data-mode="rhymes"><span class="mode-icon" data-icon="rhymes"></span><span class="mode-name">Đồng dao, ca dao</span><span class="mode-sub">Nghe, đọc theo, hiểu nghĩa</span></button>
+        <button class="mode-card m-quiz" data-mode="quiz"><span class="mode-icon" data-icon="quiz"></span><span class="mode-name">Đố vui văn hóa</span><span class="mode-sub">Tết, áo dài, món ăn</span></button>
       </div>
       <button class="link-btn" id="btn-switch-char">Đổi nhân vật</button>
     </section>
@@ -75,7 +91,7 @@
 
     <!-- 5. Góc phụ huynh -->
     <section class="screen" id="screen-parent" hidden>
-      <h2 class="screen-title">👪 Góc phụ huynh</h2>
+      <h2 class="screen-title">Góc phụ huynh</h2>
       <div class="stats">
         <div class="stat"><span class="stat-num" id="st-today">0</span><span class="stat-label">phút hôm nay</span></div>
         <div class="stat"><span class="stat-num" id="st-total">0</span><span class="stat-label">phút tất cả</span></div>
@@ -101,7 +117,7 @@
 
     <!-- 6. Cài đặt -->
     <section class="screen" id="screen-settings" hidden>
-      <h2 class="screen-title">⚙️ Cài đặt</h2>
+      <h2 class="screen-title">Cài đặt</h2>
       <div class="card">
         <h3>🔊 Giọng đọc</h3>
         <label class="row"><input type="checkbox" id="set-autoread"> Tự động đọc to câu của ông bà</label>
@@ -138,6 +154,7 @@
   <script src="config.js"></script>
   <script src="data.js"></script>
   <script src="characters.js"></script>
+  <script src="art.js"></script>
   <script src="audio-manifest.js"></script>
   <script src="app.js"></script>
 </body>

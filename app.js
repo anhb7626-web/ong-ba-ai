@@ -216,6 +216,10 @@
   }
 
   /* ===================== Màn hình ===================== */
+  function renderArt() {
+    const h = $("#hero-art"); if (h && !h.innerHTML) h.innerHTML = window.OBK_ART.hero;
+    $$("[data-icon]").forEach((el) => { if (!el.innerHTML) el.innerHTML = window.OBK_ART.icon(el.dataset.icon); });
+  }
   function renderSvgSlots() {
     $$("[data-svg]").forEach((el) => {
       const which = el.dataset.svg === "current" ? (state.char || "ong") : el.dataset.svg;
@@ -257,7 +261,7 @@
     stopSpeak();
     if (mode === "quiz") { startSession("quiz", null); return; }
     state.mode = mode;
-    $("#list-title").textContent = MODE_NAMES[mode];
+    $("#list-title").textContent = MODE_NAMES[mode].replace(/^\S+\s/, "");
     const list = $("#item-list");
     list.innerHTML = "";
     const done = new Set(stats().lessons.map((l) => l.id));
@@ -265,7 +269,7 @@
       const b = document.createElement("button");
       b.className = "item";
       const sub = mode === "rhymes" ? item.kind : mode === "stories" ? `${item.steps.length} lượt` : "Trò chuyện";
-      b.innerHTML = `<span class="item-emoji">${item.emoji || "⭐"}</span><span>${esc(item.title)}<small>${esc(sub)}</small></span>` +
+      b.innerHTML = `<span class="item-emoji">${window.OBK_ART.icon(item.id) || item.emoji || "⭐"}</span><span>${esc(item.title)}<small>${esc(sub)}</small></span>` +
         (done.has(item.id) ? '<span class="check" title="Đã học">✓</span>' : "");
       b.onclick = () => startSession(mode, item);
       list.appendChild(b);
@@ -274,7 +278,7 @@
       const b = document.createElement("button");
       b.className = "item ai";
       const on = aiReady();
-      b.innerHTML = `<span class="item-emoji">🤖</span><span>Trò chuyện tự do<small>${on ? "Nói gì cũng được, AI thật" : "Cần bật AI thật trong Cài đặt"}</small></span>`;
+      b.innerHTML = `<span class="item-emoji">${window.OBK_ART.icon("ai")}</span><span>Trò chuyện tự do<small>${on ? "Nói gì cũng được, AI thật" : "Cần bật AI thật trong Cài đặt"}</small></span>`;
       b.onclick = () => on ? startSession("ai", { id: "ai", title: "Trò chuyện tự do" }) : show("settings");
       list.appendChild(b);
     }
@@ -321,7 +325,7 @@
     stopSpeak();
     const s = state.session = {
       mode, item,
-      title: mode === "quiz" ? "🏮 Đố vui văn hóa" : item.title,
+      title: mode === "quiz" ? "Đố vui văn hóa" : item.title,
       steps: mode === "ai" ? [] : buildSteps(mode, item),
       i: -1, tries: 0, score: 0, total: 0,
       ai: [], // lịch sử trò chuyện AI
@@ -847,6 +851,7 @@
   }
 
   bind();
+  renderArt();
   renderSvgSlots();
   if (state.char) {
     const x = state.char === "ba" ? "Bà" : "Ông";
