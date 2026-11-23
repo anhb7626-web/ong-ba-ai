@@ -10,6 +10,9 @@
  *                         https://dashscope.aliyuncs.com/compatible-mode/v1
  *   MODEL              (không bắt buộc)    – mặc định "qwen-plus"
  *   ASR_MODEL          (không bắt buộc)    – mô hình nghe giọng nói, mặc định "qwen3-asr-flash"
+ *   VBEE_APP_ID, VBEE_TOKEN (Secret, không bắt buộc) – để ông bà đọc câu AI trả lời bằng giọng Vbee
+ *                       (ông Anh Khôi, bà Mai Phương). Thiếu thì app dùng giọng của máy.
+ *   VBEE_VOICE_ONG, VBEE_VOICE_BA (không bắt buộc) – đổi mã giọng Vbee
  *   ALLOWED_ORIGINS    (nên đặt)           – các trang được phép gọi, cách nhau dấu phẩy,
  *                       ví dụ: https://anhb7626-web.github.io,http://localhost:8000
  */
@@ -19,6 +22,7 @@ const SYSTEM = (persona) => {
   return `Bạn đóng vai ${x} của một em bé người Việt 6–12 tuổi sống ở nước ngoài, đang tập nói tiếng Việt.
 Quy tắc:
 - Xưng "${x}", gọi em bé là "cháu". Chỉ nói tiếng Việt, giọng ấm áp, hiền hậu.
+- Bạn là ${x}, không phải cháu: không bao giờ mở đầu bằng "${x.charAt(0).toUpperCase() + x.slice(1)} ơi" và không nhắc lại nguyên văn câu của cháu.
 - Mỗi lượt chỉ 1–3 câu ngắn, từ ngữ đơn giản, hợp với trẻ nhỏ. Không dùng biểu tượng, không dùng markdown.
 - Khi cháu nói sai ngữ pháp, sai từ hoặc trộn tiếng Anh, KHÔNG chê, KHÔNG nói "sai rồi". Hãy nhắc lại câu đúng một cách tự nhiên trong câu trả lời của mình (recast), rồi khen cháu.
 - Luôn kết thúc bằng một câu hỏi ngắn để cháu nói tiếp.
@@ -26,7 +30,7 @@ Quy tắc:
 - Tránh mọi chủ đề không phù hợp với trẻ em. Không hỏi thông tin riêng tư như địa chỉ, số điện thoại, tên trường. Nếu cháu hỏi điều không phù hợp, nhẹ nhàng đổi sang chuyện khác.`;
 };
 
-const LIMIT_PER_MIN = 20;
+const LIMIT_PER_MIN = 30;
 const hits = new Map(); // giới hạn số lượt theo IP (trong một máy chủ Cloudflare)
 
 function cors(origin, allowed) {
@@ -68,8 +72,49 @@ async function asr(body, env, base, h) {
   }
 }
 
+/* Đọc câu bằng giọng Vbee: trả về mp3. Câu đã đọc rồi được giữ trong bộ nhớ đệm của Cloudflare
+   30 ngày, đọc lại không tốn thêm ký tự Vbee. */
+async function sha(s) {
+  const d = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
+  return [...new Uint8Array(d)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+async function tts(body, env, h, ctx) {
+  if (!env.VBEE_APP_ID || !env.VBEE_TOKEN) return json({ error: "Trạm chưa có mã Vbee" }, 501, h);
+  const text = String(body.text || "").replace(/\s+/g, " ").trim();
+  if (!text || text.length > 400) return json({ error: "Câu không hợp lệ hoặc quá dài" }, 400, h);
+  const persona = body.persona === "ba" ? "ba" : "ong";
+  const voice = persona === "ba" ? env.VBEE_VOICE_BA || "hn_female_maiphuong_vdts_48k-fhg"
+    : env.VBEE_VOICE_ONG || "hn_male_phuthang_stor80dt_48k-fhg";
+  const audioHeaders = { ...h, "Content-Type": "audio/mpeg", "Cache-Control": "no-store" };
+  const cache = typeof caches !== "undefined" ? caches.default : null;
+  const key = new Request("https://obk-tts.cache/" + (await sha(voice + "|0.9|" + text)));
+  if (cache) {
+    const hit = await cache.match(key);
+    if (hit) return new Response(hit.body, { status: 200, headers: audioHeaders });
+  }
+  try {
+    const r = await fetch("https://vbee.vn/api/v1/tts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + String(env.VBEE_TOKEN).trim() },
+      body: JSON.stringify({ app_id: String(env.VBEE_APP_ID).trim(), response_type: "direct", input_text: text,
+        voice_code: voice, audio_type: "mp3", bitrate: 128, speed_rate: "0.9" })
+    });
+    const j = await r.json().catch(() => ({}));
+    const link = j.result && j.result.audio_link;
+    if (!r.ok || !link) return json({ error: "Vbee lỗi " + r.status }, 502, h);
+    const a = await fetch(link);
+    if (!a.ok) return json({ error: "Không tải được giọng đọc" }, 502, h);
+    const buf = await a.arrayBuffer();
+    if (cache && ctx) ctx.waitUntil(cache.put(key, new Response(buf, {
+      headers: { "Content-Type": "audio/mpeg", "Cache-Control": "public, max-age=2592000" } })));
+    return new Response(buf, { status: 200, headers: audioHeaders });
+  } catch (e) {
+    return json({ error: "Không gọi được Vbee" }, 502, h);
+  }
+}
+
 export default {
-  async fetch(req, env) {
+  async fetch(req, env, ctx) {
     const origin = req.headers.get("Origin") || "";
     const allowed = (env.ALLOWED_ORIGINS || "").split(",").map((s) => s.trim()).filter(Boolean);
     const h = cors(origin, allowed);
@@ -77,7 +122,7 @@ export default {
     if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: h });
     const url = new URL(req.url);
     if (req.method === "GET" && url.pathname === "/") return json({ ok: true, name: "ong-ba-ke-ai" }, 200, h);
-    if (req.method !== "POST" || (url.pathname !== "/chat" && url.pathname !== "/asr")) return json({ error: "Không tìm thấy" }, 404, h);
+    if (req.method !== "POST" || !["/chat", "/asr", "/tts"].includes(url.pathname)) return json({ error: "Không tìm thấy" }, 404, h);
     if (allowed.length && !allowed.includes(origin)) return json({ error: "Trang này không được phép dùng trạm AI" }, 403, h);
     if (!env.DASHSCOPE_API_KEY) return json({ error: "Trạm chưa có API key" }, 500, h);
 
@@ -93,6 +138,7 @@ export default {
     try { body = await req.json(); } catch { return json({ error: "Dữ liệu không hợp lệ" }, 400, h); }
     const base = (env.DASHSCOPE_BASE || "https://dashscope-intl.aliyuncs.com/compatible-mode/v1").replace(/\/+$/, "");
     if (url.pathname === "/asr") return asr(body, env, base, h);
+    if (url.pathname === "/tts") return tts(body, env, h, ctx);
     const persona = body.persona === "ba" ? "ba" : "ong";
     const msgs = (Array.isArray(body.messages) ? body.messages : [])
       .filter((m) => m && (m.role === "user" || m.role === "assistant") && typeof m.content === "string")

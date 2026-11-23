@@ -205,19 +205,55 @@
       player.play().catch(end);
     });
   }
+  /* Câu chưa có file sẵn (AI trả lời, bài cô giáo tự soạn): xin trạm đọc bằng giọng Vbee.
+     Trạm chưa có mã Vbee hoặc lỗi thì dùng giọng của máy như trước. */
+  const ttsMemo = new Map();
+  let ttsOff = 0;
+  function ttsUrl(persona, text) {
+    const k = persona + "|" + text;
+    if (ttsMemo.has(k)) return ttsMemo.get(k);
+    if (!endpoint() || Date.now() < ttsOff) return Promise.resolve(null);
+    const ctl = new AbortController();
+    const to = setTimeout(() => ctl.abort(), 15000);
+    const p = fetch(endpoint() + "/tts", {
+      method: "POST", headers: { "Content-Type": "application/json" }, signal: ctl.signal,
+      body: JSON.stringify({ persona, text })
+    }).then(async (r) => {
+      clearTimeout(to);
+      if (r.status === 501) { ttsOff = Date.now() + 3600000; return null; } // trạm chưa có mã Vbee
+      if (!r.ok) { ttsOff = Date.now() + 60000; return null; }
+      return URL.createObjectURL(await r.blob());
+    }).catch(() => { clearTimeout(to); return null; })
+      .then((u) => { if (!u) ttsMemo.delete(k); return u; });
+    ttsMemo.set(k, p);
+    if (ttsMemo.size > 60) ttsMemo.delete(ttsMemo.keys().next().value);
+    return p;
+  }
   async function speak(text, force) {
     if (!force && !settings.autoread) return;
     const token = ++speakToken;
     if (synth) synth.cancel();
     player.pause();
     const persona = state.char === "ba" ? "ba" : "ong";
-    setTalking(true);
-    SND.duck(true);
+    // gom các đoạn chưa có file liền nhau thành một lần đọc Vbee, xin trước cho cả câu
+    const plan = [];
+    let run = [];
+    const flush = () => { if (run.length) { const segs = run; plan.push({ segs, url: ttsUrl(persona, segs.join(" ")) }); run = []; } };
     for (const seg of segments(text)) {
-      if (token !== speakToken) return;
       const key = hashKey(persona, seg);
-      if (audioSet[persona].has(key)) await fileSay(`audio/${persona}/${key}.mp3`, token);
-      else await browserSay(seg, token);
+      if (audioSet[persona].has(key)) { flush(); plan.push({ file: `audio/${persona}/${key}.mp3` }); }
+      else run.push(seg);
+    }
+    flush();
+    SND.duck(true);
+    for (const it of plan) {
+      if (token !== speakToken) return;
+      if (it.file) { setTalking(true); await fileSay(it.file, token); continue; }
+      const url = await it.url;
+      if (token !== speakToken) return;
+      setTalking(true);
+      if (url) await fileSay(url, token);
+      else for (const seg of it.segs) await browserSay(seg, token);
     }
     if (token === speakToken) { setTalking(false); SND.duck(false); }
   }
