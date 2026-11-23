@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Ông Bà Kể</title>
+  <meta name="description" content="Ông Bà Kể – trợ lý luyện nói tiếng Việt cho trẻ em gốc Việt ở nước ngoài.">
+  <meta name="theme-color" content="#b3261e">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%23f2b632'/%3E%3Ctext x='32' y='44' font-size='34' text-anchor='middle'%3E%F0%9F%8F%AE%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <button class="icon-btn" id="btn-back" aria-label="Quay lại" hidden>‹</button>
+    <h1 class="brand" id="brand">🏮 Ông Bà Kể</h1>
+    <div class="top-actions">
+      <button class="icon-btn" id="btn-parent" aria-label="Góc phụ huynh" title="Góc phụ huynh">👪</button>
+      <button class="icon-btn" id="btn-settings" aria-label="Cài đặt" title="Cài đặt">⚙️</button>
+    </div>
+  </header>
+
+  <main id="app">
+    <!-- 1. Chọn nhân vật -->
+    <section class="screen" id="screen-home">
+      <p class="lead">Cháu muốn trò chuyện với ai nào?</p>
+      <div class="char-pick">
+        <button class="char-card" data-char="ong">
+          <div class="char-art" data-svg="ong"></div>
+          <span class="char-name">Ông</span>
+        </button>
+        <button class="char-card" data-char="ba">
+          <div class="char-art" data-svg="ba"></div>
+          <span class="char-name">Bà</span>
+        </button>
+      </div>
+      <p class="hint">Bấm vào ông hoặc bà để bắt đầu.</p>
+    </section>
+
+    <!-- 2. Chọn chế độ -->
+    <section class="screen" id="screen-modes" hidden>
+      <div class="greet">
+        <div class="char-mini" data-svg="current"></div>
+        <p class="bubble-static" id="greet-text"></p>
+      </div>
+      <div class="mode-grid">
+        <button class="mode-card m-story" data-mode="stories"><span class="mode-emoji">📖</span><span>Kể chuyện cổ tích</span></button>
+        <button class="mode-card m-chat" data-mode="chats"><span class="mode-emoji">🍚</span><span>Trò chuyện hằng ngày</span></button>
+        <button class="mode-card m-rhyme" data-mode="rhymes"><span class="mode-emoji">🎶</span><span>Đồng dao – ca dao</span></button>
+        <button class="mode-card m-quiz" data-mode="quiz"><span class="mode-emoji">🏮</span><span>Đố vui văn hóa</span></button>
+      </div>
+      <button class="link-btn" id="btn-switch-char">Đổi nhân vật</button>
+    </section>
+
+    <!-- 3. Danh sách bài -->
+    <section class="screen" id="screen-list" hidden>
+      <h2 class="screen-title" id="list-title"></h2>
+      <div class="item-list" id="item-list"></div>
+    </section>
+
+    <!-- 4. Buổi trò chuyện -->
+    <section class="screen screen-session" id="screen-session" hidden>
+      <div class="session-head">
+        <div class="char-talk" id="talk-char" data-svg="current"></div>
+        <div>
+          <h2 class="session-title" id="session-title"></h2>
+          <div class="progress"><div class="progress-bar" id="progress-bar"></div></div>
+        </div>
+      </div>
+      <div class="log" id="log" aria-live="polite"></div>
+      <div class="input-panel" id="input-panel"></div>
+    </section>
+
+    <!-- 5. Góc phụ huynh -->
+    <section class="screen" id="screen-parent" hidden>
+      <h2 class="screen-title">👪 Góc phụ huynh</h2>
+      <div class="stats">
+        <div class="stat"><span class="stat-num" id="st-today">0</span><span class="stat-label">phút hôm nay</span></div>
+        <div class="stat"><span class="stat-num" id="st-total">0</span><span class="stat-label">phút tất cả</span></div>
+        <div class="stat"><span class="stat-num" id="st-lessons">0</span><span class="stat-label">bài đã học</span></div>
+      </div>
+      <div class="card">
+        <h3>🍲 Gợi ý hỏi con trong bữa cơm</h3>
+        <p class="muted" id="tips-from"></p>
+        <ol class="tips" id="tips"></ol>
+      </div>
+      <div class="card">
+        <h3>🌱 Từ mới con đã gặp <span class="muted" id="words-count"></span></h3>
+        <p class="muted">Từ có ⭐ là từ con đã bấm “Xem nghĩa”. Bấm vào từ để xem nghĩa.</p>
+        <div class="word-chips" id="word-chips"></div>
+      </div>
+      <div class="card">
+        <h3>📅 Bài học gần đây</h3>
+        <ul class="recent" id="recent"></ul>
+      </div>
+      <p class="muted small">Dữ liệu chỉ lưu trên máy này (localStorage), không gửi đi đâu.</p>
+      <button class="btn btn-ghost" id="btn-reset">Xóa dữ liệu luyện tập</button>
+    </section>
+
+    <!-- 6. Cài đặt -->
+    <section class="screen" id="screen-settings" hidden>
+      <h2 class="screen-title">⚙️ Cài đặt</h2>
+      <div class="card">
+        <h3>🔊 Giọng đọc</h3>
+        <label class="row"><input type="checkbox" id="set-autoread"> Tự động đọc to câu của ông bà</label>
+        <label class="row col">Tốc độ đọc: <span id="rate-label"></span>
+          <input type="range" id="set-rate" min="0.6" max="1.2" step="0.05">
+        </label>
+        <p class="muted" id="voice-status"></p>
+        <button class="btn" id="btn-test-voice">Nghe thử</button>
+      </div>
+      <div class="card">
+        <h3>🎤 Nói để trả lời</h3>
+        <p class="muted" id="mic-status"></p>
+      </div>
+      <div class="card">
+        <h3>🤖 AI thật</h3>
+        <p class="muted">Mặc định, ông bà nói theo kịch bản soạn sẵn. Khi bật AI thật, mục “Trò chuyện tự do” sẽ dùng AI (Qwen) qua trạm trung chuyển của trang. API key không nằm trên trang này.</p>
+        <label class="row"><input type="checkbox" id="set-ai"> Bật trò chuyện tự do với AI</label>
+        <label class="row col">Địa chỉ trạm AI
+          <input type="url" id="set-endpoint" placeholder="https://...workers.dev" autocomplete="off">
+        </label>
+        <p class="muted" id="ai-status"></p>
+        <button class="btn" id="btn-test-ai">Kiểm tra kết nối</button>
+      </div>
+    </section>
+  </main>
+
+  <div class="sheet" id="sheet" hidden>
+    <div class="sheet-inner">
+      <button class="sheet-close" id="sheet-close" aria-label="Đóng">✕</button>
+      <div id="sheet-body"></div>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="data.js"></script>
+  <script src="characters.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
