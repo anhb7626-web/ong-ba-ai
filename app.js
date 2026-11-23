@@ -97,8 +97,13 @@
   function loadVoices() {
     if (!synth) return;
     const vs = synth.getVoices();
-    viVoice = vs.find((v) => /^vi/i.test(v.lang) && /google/i.test(v.name))
-      || vs.find((v) => /^vi/i.test(v.lang)) || null;
+    const vi = vs.filter((v) => /^vi/i.test(v.lang));
+    // Ưu tiên giọng "Natural" của Edge: Nam Minh (nam) cho Ông, Hoài My (nữ) cho Bà
+    const want = state.char === "ba" ? /hoai\s*my|hoàimy|female|nữ/i : /nam\s*minh|male|nam/i;
+    viVoice = vi.find((v) => /natural|online/i.test(v.name) && want.test(v.name))
+      || vi.find((v) => /natural|online/i.test(v.name))
+      || vi.find((v) => /google/i.test(v.name))
+      || vi[0] || null;
     renderVoiceStatus();
   }
   if (synth) { loadVoices(); synth.onvoiceschanged = loadVoices; }
@@ -107,32 +112,84 @@
     $$('[data-svg="current"]').forEach((el) => el.classList.toggle("talking", on));
   }
 
+  /* Tách câu thành từng đoạn để ghép với file âm thanh đọc sẵn (audio/) */
+  function segments(text) {
+    return String(text).replace(/<[^>]+>/g, "").split(/(?<=[.!?:])\s+/).map((x) => x.trim()).filter(Boolean);
+  }
+  function hashKey(persona, seg) {
+    let h = 0x811c9dc5;
+    const str = persona + "|" + seg.normalize("NFC");
+    for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 0x01000193); }
+    return (h >>> 0).toString(16).padStart(8, "0");
+  }
+  const AUDIO = window.OBK_AUDIO || {};
+  const audioSet = { ong: new Set(AUDIO.ong || []), ba: new Set(AUDIO.ba || []) };
+  const player = new Audio();
+  player.preload = "auto";
+  // mở khóa phát âm thanh trên iPhone ở lần chạm đầu tiên
+  document.addEventListener("pointerdown", function unlock() {
+    player.src = "data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjI5LjEwMAAAAAAAAAAAAAAA//tQxAADB8AhSmxhIIEVCSiJrDCQBTcu3UrAIwUdkRgQbFAZC1CQEwTJ9mjRvBA4UOLD8nKVOWfh+UlK3z/177OXrfOdKl7pyn3Xf//WreyTRUoAWgBgkOAGbZHBgG1OF6zM82DWbZaUmMBptgQhGjsyYqc9ae9XFz280948NMBWInljyzsNRFLPWdnZGWrddDsjK1unuSrVN9jJsK8KuQtQCtMBjCEtImISdNKJOopIpBFpNSMbIHCSRpRR5iakjTiyzLhchUUBwCgyKiweBv/7UsQbg8isVNoMPMjAAAA0gAAABEVFGmgqK////9bP/6XCykxBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq";
+    player.play().catch(() => {});
+    document.removeEventListener("pointerdown", unlock);
+  }, { once: true });
+
+  /* Biểu cảm nhân vật: "happy" (vui), "nod" (gật đầu), "listen" (nghiêng đầu nghe) */
+  const MOODS = ["happy", "nod", "listen"];
+  let moodTimer = null;
+  function setMood(mood, ms) {
+    const els = $$('[data-svg="current"]');
+    els.forEach((el) => MOODS.forEach((m) => el.classList.toggle(m, m === mood)));
+    clearTimeout(moodTimer);
+    if (mood && ms) moodTimer = setTimeout(() => setMood(null), ms);
+  }
+
   let speakToken = 0;
-  function speak(text, force) {
+  function browserSay(seg, token) {
     return new Promise((resolve) => {
-      const plain = String(text).replace(/<[^>]+>/g, "");
-      const token = ++speakToken;
-      const done = () => { if (token === speakToken) setTalking(false); resolve(); };
-      if (!force && !settings.autoread) { resolve(); return; }
-      setTalking(true);
+      if (token !== speakToken) return resolve();
       if (!synth || !(viVoice || synth.getVoices().length)) {
-        // Không có giọng đọc: chỉ cử động miệng một lúc cho sinh động
-        setTimeout(done, Math.min(4000, 600 + plain.length * 45));
+        setTimeout(resolve, Math.min(4000, 500 + seg.length * 45));
         return;
       }
-      synth.cancel();
-      const u = new SpeechSynthesisUtterance(plain);
+      let finished = false;
+      const end = () => { if (!finished) { finished = true; resolve(); } };
+      const u = new SpeechSynthesisUtterance(seg);
       u.lang = "vi-VN";
       if (viVoice) u.voice = viVoice;
       u.rate = settings.rate * (state.char === "ong" ? 0.95 : 1);
       u.pitch = state.char === "ong" ? 0.8 : 1.15;
-      u.onend = done; u.onerror = done;
-      // Chrome đôi khi không gọi onend: đặt giới hạn thời gian
-      setTimeout(done, 1500 + plain.length * 140);
+      u.onend = end; u.onerror = end;
+      setTimeout(end, 1500 + seg.length * 140); // Chrome đôi khi không gọi onend
       synth.speak(u);
     });
   }
-  function stopSpeak() { speakToken++; if (synth) synth.cancel(); setTalking(false); }
+  function fileSay(url, token) {
+    return new Promise((resolve) => {
+      if (token !== speakToken) return resolve();
+      let finished = false;
+      const end = () => { if (!finished) { finished = true; player.onended = player.onerror = null; resolve(); } };
+      player.onended = end; player.onerror = end;
+      player.src = url;
+      player.playbackRate = Math.max(0.7, Math.min(1.3, settings.rate / 0.9));
+      player.play().catch(end);
+    });
+  }
+  async function speak(text, force) {
+    if (!force && !settings.autoread) return;
+    const token = ++speakToken;
+    if (synth) synth.cancel();
+    player.pause();
+    const persona = state.char === "ba" ? "ba" : "ong";
+    setTalking(true);
+    for (const seg of segments(text)) {
+      if (token !== speakToken) return;
+      const key = hashKey(persona, seg);
+      if (audioSet[persona].has(key)) await fileSay(`audio/${persona}/${key}.mp3`, token);
+      else await browserSay(seg, token);
+    }
+    if (token === speakToken) setTalking(false);
+  }
+  function stopSpeak() { speakToken++; if (synth) synth.cancel(); player.pause(); setTalking(false); }
 
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   let rec = null;
@@ -186,6 +243,7 @@
 
   function chooseChar(c) {
     state.char = c; store.set("char", c);
+    loadVoices();
     renderSvgSlots();
     const x = c === "ba" ? "Bà" : "Ông";
     $("#greet-text").textContent = `${x} đây! Hôm nay cháu muốn làm gì với ${x.toLowerCase()} nào?`;
@@ -432,6 +490,7 @@
       (alts) => submit(alts[0], alts),
       (on, err) => {
         mic.classList.toggle("on", on);
+        setMood(on ? "listen" : null);
         $("#listen-note").textContent = on ? "🎤 Ông bà đang nghe…".replace("Ông bà", state.char === "ba" ? "Bà" : "Ông") : (err || "");
       }
     );
@@ -467,6 +526,8 @@
     "Cháu chịu khó quá, {X} vui lắm!", "Lần sau cháu nhớ ngay thôi, giỏi lắm!"
   ];
   const REPLY_OPEN = ["Ồ, thế à!", "Hay quá!", "À, {X} hiểu rồi."];
+  const READ_DONE = ["Cháu đọc hay quá!", "Giỏi lắm, đọc to rõ ràng!", "Hay lắm cháu ơi!"];
+  const READ_OK = ["Cháu đọc đúng rồi! Hay quá!", "Giỏi quá, đọc chuẩn lắm!"];
 
   function confetti() {
     const em = ["⭐", "🌸", "🏮", "✨", "🎉"];
@@ -524,9 +585,11 @@
         if (judge(step, alts, idx)) {
           s.score++;
           confetti();
+          setMood("happy", 2600);
           gpSay(pick(PRAISE) + (step.yes ? " " + step.yes : ""), { cls: "praise" });
         } else {
           // Recast: nhắc lại câu đúng một cách tự nhiên, rồi khen
+          setMood("nod", 1400);
           gpSay(step.recast + " " + pick(ENCOURAGE), { cls: "praise" });
         }
         showContinue();
@@ -548,7 +611,7 @@
       if (txt) kidSay(txt);
       panel("");
       await wait(300);
-      if (!txt) { gpSay(pick(["Cháu đọc hay quá!", "Giỏi lắm, đọc to rõ ràng!", "Hay lắm cháu ơi!"]), { cls: "praise" }); showContinue(); return; }
+      if (!txt) { gpSay(pick(READ_DONE), { cls: "praise" }); showContinue(); return; }
       const target = words(step.text);
       const best = Math.max(...alts.map((a) => {
         const set = new Set(words(a));
@@ -556,7 +619,7 @@
       }));
       if (best >= 0.6 || s.tries >= 1) {
         confetti();
-        gpSay((best >= 0.6 ? pick(["Cháu đọc đúng rồi! Hay quá!", "Giỏi quá, đọc chuẩn lắm!"]) : "Cháu cố gắng lắm! Mình cùng đọc lại một lần nữa nhé: " + step.text), { cls: "praise" });
+        gpSay((best >= 0.6 ? pick(READ_OK) : "Cháu cố gắng lắm! Mình cùng đọc lại một lần nữa nhé: " + step.text), { cls: "praise" });
         showContinue();
       } else {
         s.tries++;
@@ -710,6 +773,49 @@
       ? (settings.ai ? "AI đang bật." : "AI đang tắt.")
       : "Chưa có địa chỉ trạm AI. Xem hướng dẫn trong README.md của dự án.";
   }
+
+  /* ===================== Danh sách mọi câu ông bà có thể nói =====================
+     Dùng cho công cụ tạo file âm thanh (tools/gen-audio.js). Khi thêm bài trong data.js,
+     chạy lại công cụ đó để có giọng đọc cho câu mới; câu chưa có file sẽ đọc bằng giọng trình duyệt. */
+  window.OBK_listSpeech = function (persona) {
+    const keep = state.char;
+    state.char = persona;
+    const out = [];
+    const add = (t) => { if (t) out.push(fill(t)); };
+    const x = persona === "ba" ? "Bà" : "Ông";
+    add(`${x} đây! Hôm nay cháu muốn làm gì với ${x.toLowerCase()} nào?`);
+    ["stories", "chats", "rhymes"].forEach((mode) => D[mode].forEach((item) => {
+      buildSteps(mode, item).forEach((st) => {
+        if (st.t === "poem") add(st.lines.join(". "));
+        else if (st.t === "repeat") {
+          add("Cháu đọc theo nhé: " + st.text);
+          add("Gần đúng rồi cháu ơi! Cháu nghe {X} đọc lại nhé: " + st.text);
+          add("Cháu cố gắng lắm! Mình cùng đọc lại một lần nữa nhé: " + st.text);
+        } else { add(st.text); add(st.recast); add(st.yes); add(st.reply); }
+      });
+    }));
+    add("Mình chơi đố vui nhé! {Xc} đố cháu " + (D.quizPerRound || 5) + " câu.");
+    D.quizzes.forEach((q) => { add(q.q); add("À, đáp án là: " + q.choices[q.answer] + ". " + q.explain); add(q.explain); });
+    for (let n = 1; n <= (D.quizPerRound || 5); n++) add("Câu " + n + ":");
+    for (let n = 0; n <= (D.quizPerRound || 5); n++) add(`Cháu trả lời đúng ${n} trên ${D.quizPerRound || 5} câu.`);
+    [].concat(PRAISE, ENCOURAGE, REPLY_OPEN, READ_DONE, READ_OK, [
+      "Giỏi quá!", "Cháu học thêm là nhớ hết ngay!", "{Xc} thương cháu!",
+      "Hết truyện rồi! Cháu nghe chăm chú lắm. Tối nay cháu kể lại cho bố mẹ nghe nhé!",
+      "Cháu đọc thuộc bài rồi đấy! Cháu đọc cho bố mẹ nghe nhé!",
+      "{Xc} nói chuyện với cháu vui quá! Mai mình nói chuyện tiếp nhé.",
+      "Cháu ơi, hôm nay cháu muốn kể gì cho {X} nghe nào?",
+      "{Xc} nghe không rõ lắm, chắc mạng yếu. Mình nói chuyện theo bài soạn sẵn nhé!",
+      "Chào cháu, {X} đây. Cháu có khỏe không?"
+    ]).forEach(add);
+    Object.keys(D.glossary).forEach((w) => out.push(w));
+    state.char = keep;
+    const seen = new Map();
+    out.forEach((t) => segments(t).forEach((seg) => {
+      const k = hashKey(persona, seg);
+      if (!seen.has(k)) seen.set(k, seg);
+    }));
+    return Array.from(seen, ([key, text]) => ({ key, text }));
+  };
 
   /* ===================== Gắn sự kiện ===================== */
   function bind() {

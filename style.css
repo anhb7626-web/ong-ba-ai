@@ -75,13 +75,20 @@ main { max-width: 720px; margin: 0 auto; padding: 18px 16px 40px; }
 .char-name { font-size: 1.6rem; font-weight: 900; color: var(--red); }
 
 /* SVG cử động */
-.eyes { transform-box: fill-box; transform-origin: center; animation: blink 4.5s infinite; }
+.eyes-open { transform-box: fill-box; transform-origin: center; animation: blink 4.5s infinite; }
 @keyframes blink { 0%, 93%, 100% { transform: scaleY(1); } 96% { transform: scaleY(.1); } }
+.eyes-happy { display: none; }
+.happy .eyes-open { display: none; }
+.happy .eyes-happy { display: inline; }
+.head { transform-box: view-box; transform-origin: 100px 140px; transition: transform .35s ease; }
+.listen .head { transform: rotate(-7deg); }
+.nod .head { animation: nod .55s ease-in-out 2; }
+@keyframes nod { 50% { transform: translateY(5px) rotate(2deg); } }
+.happy .head { animation: hop .38s ease-in-out 3; }
+@keyframes hop { 50% { transform: translateY(-6px) rotate(3deg); } }
 .mouth { transform-box: fill-box; transform-origin: center; }
 .talking .mouth { animation: talk .2s ease-in-out infinite alternate; }
-@keyframes talk { from { transform: scaleY(1); } to { transform: scaleY(2.8) scaleX(.9); } }
-.talking svg { animation: bob .6s ease-in-out infinite alternate; }
-@keyframes bob { from { transform: translateY(0); } to { transform: translateY(-2px); } }
+@keyframes talk { from { transform: scaleY(1); } to { transform: scaleY(2.6) scaleX(.9); } }
 
 /* ---------- Chọn chế độ ---------- */
 .greet { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }

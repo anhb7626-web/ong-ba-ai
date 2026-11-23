@@ -1,68 +1,111 @@
-/* Hình minh họa Ông và Bà (SVG tự vẽ). Lớp .mouth cử động khi đang nói, .eyes chớp mắt. */
-window.OBK_SVG = {
-  ong: `
-<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ông">
-  <circle cx="100" cy="100" r="98" fill="#fde3a7"/>
-  <circle cx="100" cy="100" r="98" fill="none" stroke="#e9b949" stroke-width="4" stroke-dasharray="2 10" stroke-linecap="round"/>
-  <path d="M34 200 C38 152 66 136 100 136 C134 136 162 152 166 200Z" fill="#8a5a2b"/>
-  <path d="M84 138 L100 160 L116 138Z" fill="#f7e9d0"/>
-  <circle cx="100" cy="172" r="3" fill="#e9b949"/><circle cx="100" cy="186" r="3" fill="#e9b949"/>
-  <rect x="88" y="122" width="24" height="20" rx="8" fill="#e8b88f"/>
-  <ellipse cx="57" cy="96" rx="9" ry="12" fill="#e8b88f"/>
-  <ellipse cx="143" cy="96" rx="9" ry="12" fill="#e8b88f"/>
-  <ellipse cx="100" cy="90" rx="43" ry="47" fill="#f3c9a1"/>
-  <ellipse cx="86" cy="56" rx="14" ry="7" fill="#fff" opacity=".45"/>
-  <path d="M58 92 C52 70 60 58 72 56 C68 66 66 78 68 92Z" fill="#f4f1ea"/>
-  <path d="M142 92 C148 70 140 58 128 56 C132 66 134 78 132 92Z" fill="#f4f1ea"/>
-  <path d="M74 76 Q84 70 94 76" stroke="#f4f1ea" stroke-width="5" fill="none" stroke-linecap="round"/>
-  <path d="M106 76 Q116 70 126 76" stroke="#f4f1ea" stroke-width="5" fill="none" stroke-linecap="round"/>
-  <g class="eyes">
-    <ellipse cx="84" cy="90" rx="4.5" ry="5" fill="#3b2a1e"/>
-    <ellipse cx="116" cy="90" rx="4.5" ry="5" fill="#3b2a1e"/>
+/*
+ * Hình minh họa Ông và Bà (SVG tự vẽ, lấy cảm hứng tranh dân gian Đông Hồ:
+ * nét viền đậm, màu phẳng đỏ – vàng – xanh trên nền giấy điệp).
+ * Các lớp dùng cho cử động:
+ *   .head        – đầu (nghiêng khi nghe, gật khi nhắc lại, nhún khi vui)
+ *   .eyes-open   – mắt thường (chớp mắt)
+ *   .eyes-happy  – mắt cười (hiện khi cháu trả lời đúng)
+ *   .mouth       – miệng (mấp máy khi đang nói)
+ */
+(function () {
+  const INK = "#2b1d14";
+  const frame = (ring, accent) => `
+  <defs>
+    <pattern id="diep-${ring.slice(1)}" width="10" height="10" patternUnits="userSpaceOnUse">
+      <rect width="10" height="10" fill="#f6e9c9"/>
+      <circle cx="2" cy="3" r=".7" fill="#e3cf9f"/><circle cx="7" cy="8" r=".6" fill="#eadcb4"/>
+      <circle cx="8" cy="2" r=".5" fill="#fff6dc"/>
+    </pattern>
+    <clipPath id="clip-${ring.slice(1)}"><circle cx="100" cy="100" r="92"/></clipPath>
+  </defs>
+  <circle cx="100" cy="100" r="96" fill="${ring}"/>
+  <circle cx="100" cy="100" r="92" fill="url(#diep-${ring.slice(1)})"/>
+  <g clip-path="url(#clip-${ring.slice(1)})">
+    <path d="M18 70 q8 -10 18 -4 q4 -10 14 -6 q-2 8 -10 8 q-6 8 -22 2z" fill="${accent}" opacity=".55"/>
+    <path d="M150 52 q8 -10 18 -4 q4 -10 14 -6 q-2 8 -10 8 q-6 8 -22 2z" fill="${accent}" opacity=".55"/>
+    <circle cx="165" cy="120" r="5" fill="${accent}" opacity=".35"/><circle cx="32" cy="128" r="4" fill="${accent}" opacity=".35"/>
+    __BODY__
   </g>
-  <circle cx="84" cy="90" r="13" fill="none" stroke="#6b4423" stroke-width="3"/>
-  <circle cx="116" cy="90" r="13" fill="none" stroke="#6b4423" stroke-width="3"/>
-  <path d="M97 90 Q100 87 103 90" stroke="#6b4423" stroke-width="3" fill="none"/>
-  <circle cx="74" cy="108" r="7" fill="#f29b8c" opacity=".55"/>
-  <circle cx="126" cy="108" r="7" fill="#f29b8c" opacity=".55"/>
-  <path d="M80 114 C82 136 92 150 100 152 C108 150 118 136 120 114 C112 122 88 122 80 114Z" fill="#f4f1ea"/>
-  <ellipse class="mouth" cx="100" cy="121" rx="7" ry="3" fill="#8b3a2e"/>
-  <path d="M82 114 Q92 108 100 114 Q108 108 118 114 Q108 118 100 116 Q92 118 82 114Z" fill="#fff"/>
-  <path d="M96 100 Q100 106 104 100" stroke="#c98d68" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-</svg>`,
-  ba: `
-<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Bà">
-  <circle cx="100" cy="100" r="98" fill="#f9d9cf"/>
-  <circle cx="100" cy="100" r="98" fill="none" stroke="#e58b7a" stroke-width="4" stroke-dasharray="2 10" stroke-linecap="round"/>
-  <path d="M34 200 C38 152 66 136 100 136 C134 136 162 152 166 200Z" fill="#8e4a7a"/>
-  <path d="M88 138 Q100 150 112 138" stroke="#6d3560" stroke-width="3" fill="none"/>
-  <circle cx="86" cy="170" r="3" fill="#f2b632"/><circle cx="114" cy="170" r="3" fill="#f2b632"/>
-  <path d="M60 175 Q72 168 80 180" stroke="#b0679d" stroke-width="3" fill="none"/>
-  <path d="M140 175 Q128 168 120 180" stroke="#b0679d" stroke-width="3" fill="none"/>
-  <rect x="88" y="122" width="24" height="20" rx="8" fill="#e8b88f"/>
-  <circle cx="100" cy="34" r="20" fill="#a7a19a"/>
-  <path d="M90 28 Q100 22 110 28" stroke="#c9c3bb" stroke-width="3" fill="none"/>
-  <rect x="94" y="14" width="3" height="22" rx="1.5" fill="#c58b3a" transform="rotate(25 95 25)"/>
-  <ellipse cx="57" cy="96" rx="9" ry="12" fill="#e8b88f"/>
-  <ellipse cx="143" cy="96" rx="9" ry="12" fill="#e8b88f"/>
-  <circle cx="56" cy="110" r="4" fill="#f2b632"/>
-  <circle cx="144" cy="110" r="4" fill="#f2b632"/>
-  <ellipse cx="100" cy="92" rx="42" ry="46" fill="#f3c9a1"/>
-  <path d="M57 92 C54 58 76 44 100 44 C124 44 146 58 143 92 C136 72 122 62 100 62 C80 62 64 72 57 92Z" fill="#a7a19a"/>
-  <path d="M100 46 C92 54 88 60 86 64" stroke="#8f8983" stroke-width="2.5" fill="none"/>
-  <path d="M100 46 C108 54 112 60 114 64" stroke="#8f8983" stroke-width="2.5" fill="none"/>
-  <path d="M76 80 Q84 76 92 80" stroke="#7a7068" stroke-width="3.5" fill="none" stroke-linecap="round"/>
-  <path d="M108 80 Q116 76 124 80" stroke="#7a7068" stroke-width="3.5" fill="none" stroke-linecap="round"/>
-  <g class="eyes">
-    <ellipse cx="84" cy="93" rx="4.5" ry="5" fill="#3b2a1e"/>
-    <ellipse cx="116" cy="93" rx="4.5" ry="5" fill="#3b2a1e"/>
-  </g>
-  <path d="M76 99 Q80 102 84 101" stroke="#d9a07e" stroke-width="2" fill="none"/>
-  <path d="M124 99 Q120 102 116 101" stroke="#d9a07e" stroke-width="2" fill="none"/>
-  <circle cx="74" cy="110" r="8" fill="#f2877a" opacity=".55"/>
-  <circle cx="126" cy="110" r="8" fill="#f2877a" opacity=".55"/>
-  <path d="M96 102 Q100 108 104 102" stroke="#c98d68" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-  <path d="M86 116 Q100 128 114 116" stroke="#b5513f" stroke-width="3" fill="none" stroke-linecap="round"/>
-  <ellipse class="mouth" cx="100" cy="120" rx="6" ry="2.5" fill="#8b3a2e"/>
-</svg>`
-};
+  <circle cx="100" cy="100" r="92" fill="none" stroke="${INK}" stroke-width="3"/>
+  <circle cx="100" cy="100" r="86" fill="none" stroke="${accent}" stroke-width="1.5" stroke-dasharray="1 6" stroke-linecap="round"/>`;
+
+  const eyes = (y) => `
+    <g class="eyes-open">
+      <ellipse cx="85" cy="${y}" rx="3.6" ry="4.4" fill="${INK}"/>
+      <ellipse cx="115" cy="${y}" rx="3.6" ry="4.4" fill="${INK}"/>
+      <circle cx="86.2" cy="${y - 1.4}" r="1.1" fill="#fff"/><circle cx="116.2" cy="${y - 1.4}" r="1.1" fill="#fff"/>
+    </g>
+    <g class="eyes-happy">
+      <path d="M79 ${y + 1} Q85 ${y - 6} 91 ${y + 1}" stroke="${INK}" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <path d="M109 ${y + 1} Q115 ${y - 6} 121 ${y + 1}" stroke="${INK}" stroke-width="3" fill="none" stroke-linecap="round"/>
+    </g>`;
+
+  const ong = frame("#b3261e", "#e9b949").replace("__BODY__", `
+    <!-- áo dài the, cổ trắng -->
+    <path d="M26 206 C30 156 62 134 100 134 C138 134 170 156 174 206Z" fill="#2f3e66" stroke="${INK}" stroke-width="3"/>
+    <path d="M100 136 C114 150 128 160 146 168" stroke="${INK}" stroke-width="2.5" fill="none"/>
+    <circle cx="122" cy="154" r="2.6" fill="#e9b949" stroke="${INK}" stroke-width="1"/>
+    <circle cx="136" cy="162" r="2.6" fill="#e9b949" stroke="${INK}" stroke-width="1"/>
+    <path d="M58 170 q10 -6 18 4 M142 186 q-8 -8 -18 0" stroke="#4b5b88" stroke-width="2" fill="none"/>
+    <path d="M84 134 Q100 148 116 134 L113 127 Q100 139 87 127Z" fill="#fff" stroke="${INK}" stroke-width="2"/>
+    <rect x="90" y="118" width="20" height="16" rx="6" fill="#e2ad7f" stroke="${INK}" stroke-width="2"/>
+    <g class="head">
+      <ellipse cx="62" cy="98" rx="7" ry="10" fill="#efbf90" stroke="${INK}" stroke-width="2.5"/>
+      <ellipse cx="138" cy="98" rx="7" ry="10" fill="#efbf90" stroke="${INK}" stroke-width="2.5"/>
+      <ellipse cx="100" cy="94" rx="38" ry="42" fill="#f4c99c" stroke="${INK}" stroke-width="3"/>
+      <!-- khăn xếp -->
+      <path d="M60 82 C58 52 78 38 100 38 C122 38 142 52 140 82 C128 72 114 69 100 69 C86 69 72 72 60 82Z" fill="#1f1a17" stroke="${INK}" stroke-width="3"/>
+      <path d="M64 70 C78 58 122 58 136 70" stroke="#5a4c42" stroke-width="2.2" fill="none"/>
+      <path d="M68 60 C82 50 118 50 132 60" stroke="#5a4c42" stroke-width="2.2" fill="none"/>
+      <path d="M76 50 C88 44 112 44 124 50" stroke="#5a4c42" stroke-width="2.2" fill="none"/>
+      <!-- lông mày bạc -->
+      <path d="M74 84 Q84 76 94 82" stroke="#fffaf0" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <path d="M74 84 Q84 76 94 82" stroke="${INK}" stroke-width="1" fill="none" opacity=".4"/>
+      <path d="M106 82 Q116 76 126 84" stroke="#fffaf0" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <path d="M106 82 Q116 76 126 84" stroke="${INK}" stroke-width="1" fill="none" opacity=".4"/>
+      ${eyes(94)}
+      <circle cx="74" cy="108" r="6.5" fill="#e0533f" opacity=".45"/>
+      <circle cx="126" cy="108" r="6.5" fill="#e0533f" opacity=".45"/>
+      <path d="M97 98 Q100 108 104 104" stroke="${INK}" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <!-- râu dài -->
+      <path d="M82 116 C80 140 92 160 100 176 C108 160 120 140 118 116 C110 124 90 124 82 116Z" fill="#fffaf0" stroke="${INK}" stroke-width="2.5"/>
+      <path d="M92 132 Q96 148 100 160 M108 132 Q104 148 100 160" stroke="#d8cfc0" stroke-width="1.5" fill="none"/>
+      <ellipse class="mouth" cx="100" cy="121" rx="6" ry="2.6" fill="#8b2e22" stroke="${INK}" stroke-width="1.2"/>
+      <path d="M100 114 C94 110 84 112 78 118 C86 116 94 118 100 117 C106 118 114 116 122 118 C116 112 106 110 100 114Z" fill="#fffaf0" stroke="${INK}" stroke-width="2"/>
+    </g>`);
+
+  const ba = frame("#3f7d4e", "#c0392b").replace("__BODY__", `
+    <!-- áo tứ thân, yếm đỏ, thắt lưng xanh -->
+    <path d="M26 206 C30 156 62 134 100 134 C138 134 170 156 174 206Z" fill="#8a5a2b" stroke="${INK}" stroke-width="3"/>
+    <path d="M86 134 L100 166 L114 134Z" fill="#c0392b" stroke="${INK}" stroke-width="2.5"/>
+    <path d="M70 140 C80 160 88 176 92 206 M130 140 C120 160 112 176 108 206" stroke="${INK}" stroke-width="2.5" fill="none"/>
+    <path d="M60 186 Q100 176 140 186 L142 196 Q100 186 58 196Z" fill="#4f9a5e" stroke="${INK}" stroke-width="2.5"/>
+    <rect x="90" y="118" width="20" height="16" rx="6" fill="#e2ad7f" stroke="${INK}" stroke-width="2"/>
+    <g class="head">
+      <ellipse cx="62" cy="100" rx="7" ry="10" fill="#efbf90" stroke="${INK}" stroke-width="2.5"/>
+      <ellipse cx="138" cy="100" rx="7" ry="10" fill="#efbf90" stroke="${INK}" stroke-width="2.5"/>
+      <circle cx="61" cy="114" r="3.6" fill="#e9b949" stroke="${INK}" stroke-width="1.5"/>
+      <circle cx="139" cy="114" r="3.6" fill="#e9b949" stroke="${INK}" stroke-width="1.5"/>
+      <ellipse cx="100" cy="96" rx="37" ry="41" fill="#f4c99c" stroke="${INK}" stroke-width="3"/>
+      <!-- tóc bạc ở thái dương -->
+      <path d="M64 92 C64 78 70 72 78 70 M136 92 C136 78 130 72 122 70" stroke="#c9c2b8" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <!-- khăn mỏ quạ -->
+      <path d="M58 90 C54 60 74 42 100 40 C126 42 146 60 142 90 C136 78 120 70 106 68 L100 58 L94 68 C80 70 64 78 58 90Z" fill="#1f1a17" stroke="${INK}" stroke-width="3"/>
+      <path d="M86 44 L100 18 L114 44Z" fill="#1f1a17" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M70 66 C84 54 116 54 130 66" stroke="#4a3f38" stroke-width="2" fill="none"/>
+      <path d="M76 86 Q85 80 93 84" stroke="#6f655c" stroke-width="3.2" fill="none" stroke-linecap="round"/>
+      <path d="M107 84 Q115 80 124 86" stroke="#6f655c" stroke-width="3.2" fill="none" stroke-linecap="round"/>
+      ${eyes(96)}
+      <path d="M77 103 Q81 106 85 104 M123 103 Q119 106 115 104" stroke="#cf9a74" stroke-width="1.6" fill="none"/>
+      <circle cx="74" cy="111" r="7" fill="#e0533f" opacity=".45"/>
+      <circle cx="126" cy="111" r="7" fill="#e0533f" opacity=".45"/>
+      <path d="M97 100 Q100 110 104 106" stroke="${INK}" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <path d="M86 117 Q100 129 114 117" stroke="${INK}" stroke-width="2.5" fill="#c0392b" stroke-linecap="round"/>
+      <ellipse class="mouth" cx="100" cy="121" rx="5.5" ry="2.4" fill="#8b2e22" stroke="${INK}" stroke-width="1.2"/>
+    </g>`);
+
+  window.OBK_SVG = {
+    ong: `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ông">${ong}</svg>`,
+    ba: `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Bà">${ba}</svg>`
+  };
+})();
