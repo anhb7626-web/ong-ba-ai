@@ -798,14 +798,6 @@ body {
 }
 .mode-name { font-size: 1.08rem; line-height: 1.25; margin: 4px 16px 2px; color: var(--ink); }
 .mode-sub { margin: 0 16px; font-size: .8rem; color: var(--ink-soft); opacity: 1; }
-.seal { /* triện son ở góc tranh */
-  position: absolute !important; right: 12px; top: 12px; z-index: 2;
-  min-width: 30px; height: 30px; padding: 0 4px; display: grid; place-items: center;
-  font-family: var(--head); font-size: .72rem; line-height: 1; color: var(--son);
-  background: var(--card); border-radius: 4px; transform: rotate(5deg);
-  box-shadow: inset 0 0 0 2px var(--son), 0 0 0 1.5px var(--ink);
-}
-.m-story .seal { color: var(--card); background: var(--son-dark); box-shadow: inset 0 0 0 2px rgba(253,246,227,.7), 0 0 0 1.5px var(--ink); }
 .mode-card:hover { transform: translateY(-2px); box-shadow: 4px 5px 0 var(--ink), inset 0 0 0 5px var(--card), inset 0 0 0 6.5px var(--ink); }
 .mode-card:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink), inset 0 0 0 5px var(--card), inset 0 0 0 6.5px var(--ink); }
 /* tranh ngang cho Nghe trước giờ ngủ */
@@ -855,22 +847,41 @@ body {
 .card h3 { font-size: 1.15rem; line-height: 1.3; }
 .card { border-width: 2px; }
 
-/* ---------- Triện mềm hơn: đóng son lên giấy, mép nhòe, nghiêng mỗi tờ một kiểu ---------- */
-.seal {
-  top: auto; bottom: 12px; right: 12px;
-  min-width: 34px; height: 34px; padding: 0 5px;
-  font-size: .82rem; color: var(--card); letter-spacing: .01em;
-  background: var(--son);
-  border-radius: 7px 4px 8px 5px / 5px 8px 4px 7px;
-  box-shadow: inset 0 0 0 2px var(--son), inset 0 0 0 3.5px rgba(253,246,227,.85);
-  filter: url(#stamp); opacity: .93;
-  transform: rotate(var(--tilt, -6deg));
-}
-.m-story .seal { color: var(--card); background: var(--son); box-shadow: inset 0 0 0 2px var(--son), inset 0 0 0 3.5px rgba(253,246,227,.85); }
-.m-chat .seal  { --tilt: 5deg; }
-.m-rhyme .seal { --tilt: -3deg; }
-.m-quiz .seal  { --tilt: 7deg; }
-.m-bed .seal   { --tilt: -8deg; top: auto; bottom: 12px; }
-.mode-card .mode-sub { margin-right: 46px; }
+/* ---------- Dấu "Kể" cạnh tên app: đóng son, mép nhòe ---------- */
 .brand-mark { border-radius: 7px 4px 8px 5px / 5px 8px 4px 7px; filter: url(#stamp); outline: 0;
   box-shadow: inset 0 0 0 2px var(--son), inset 0 0 0 3.5px rgba(253,246,227,.85); }
+
+/* ---------- Màn học kiểu sân khấu tranh ---------- */
+/* Chỉ để lượt đang học trước mắt cháu; câu cũ cất đi, bấm "Xem lại" mới hiện */
+.log:not(.show-past) .msg.past { display: none; }
+.log.show-past .msg.past { opacity: .72; }
+.log.show-past .msg.past .story-pic { display: none; }
+.past-toggle {
+  align-self: center; display: inline-flex; align-items: center; gap: 6px;
+  font: 700 .85rem/1 var(--body, "Nunito", sans-serif); color: var(--ink-soft);
+  background: transparent; border: 1.5px dashed var(--ink-soft); border-radius: 999px;
+  padding: 8px 14px; min-height: 40px; cursor: pointer;
+}
+.past-toggle .ic { width: 16px; height: 16px; }
+/* tranh của đoạn đang kể: to, rộng hết khung; có tranh rồi thì cất cảnh nền đầu bài */
+.msg-gp.has-pic { max-width: 100%; width: 100%; }
+.msg-gp.has-pic .story-pic { width: 100%; }
+.log:has(.msg:not(.past) .story-pic) .scene { display: none; }
+/* ông bà to hơn ở đầu màn học; khi vui / nghe / nghĩ chỉ nhún nhẹ, không đè lên tên bài */
+.char-talk { width: 84px; }
+.char-talk.happy, .char-talk.think, .char-talk.listen { transform: scale(1.12); }
+/* lúc ông bà đang nói sau câu trả lời */
+.wait-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: space-between;
+  padding: 12px 14px; border: 2px dashed var(--ink-soft); border-radius: 16px; background: var(--card); }
+.wait-text { font-weight: 800; color: var(--ink-soft); flex: 1; }
+.wait-row .btn { flex: none; width: auto; min-height: 48px; padding: 0 18px; }
+.wait-dots { display: inline-flex; gap: 4px; }
+.wait-dots i { width: 8px; height: 8px; border-radius: 50%; background: var(--son); animation: wait-dot 1s ease-in-out infinite alternate; }
+.wait-dots i:nth-child(2) { animation-delay: .2s; } .wait-dots i:nth-child(3) { animation-delay: .4s; }
+@keyframes wait-dot { from { opacity: .25; transform: translateY(0); } to { opacity: 1; transform: translateY(-3px); } }
+@media (prefers-reduced-motion: reduce) { .wait-dots i { animation: none; opacity: .7; } }
+
+/* câu cháu đọc theo: chữ thân Nunito đậm cho dễ nhìn dấu */
+.model-card { font-family: "Nunito", system-ui, sans-serif !important; font-weight: 900 !important; letter-spacing: 0; }
+.btn-row.two .btn { white-space: nowrap; font-size: 1.02rem; padding-left: 10px; padding-right: 10px; }
+.wait-text { white-space: nowrap; }

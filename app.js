@@ -235,6 +235,8 @@
     if (synth) synth.cancel();
     player.pause();
     const persona = state.char === "ba" ? "ba" : "ong";
+    if (hush) hush();
+    const stopped = new Promise((r) => (hush = r));
     // đoạn chưa có file: xin trạm đọc từng câu cùng lúc, câu đầu xong là ông bà nói ngay
     const plan = segments(text).map((seg) => {
       const key = hashKey(persona, seg);
@@ -243,16 +245,17 @@
     SND.duck(true);
     for (const it of plan) {
       if (token !== speakToken) return;
-      if (it.file) { setTalking(true); await fileSay(it.file, token); continue; }
-      const url = await it.url;
+      if (it.file) { setTalking(true); await Promise.race([fileSay(it.file, token), stopped]); continue; }
+      const url = await Promise.race([it.url, stopped]);
       if (token !== speakToken) return;
       setTalking(true);
-      if (url) await fileSay(url, token);
-      else for (const seg of it.segs) await browserSay(seg, token);
+      if (url) await Promise.race([fileSay(url, token), stopped]);
+      else for (const seg of it.segs) await Promise.race([browserSay(seg, token), stopped]);
     }
     if (token === speakToken) { setTalking(false); SND.duck(false); }
   }
-  function stopSpeak() { speakToken++; if (synth) synth.cancel(); player.pause(); setTalking(false); SND.duck(false); }
+  let hush = null; // gọi để lượt nói đang chờ xong ngay (khi cháu bấm Bỏ qua, đổi màn…)
+  function stopSpeak() { if (hush) { hush(); hush = null; } speakToken++; if (synth) synth.cancel(); player.pause(); setTalking(false); SND.duck(false); }
 
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   /* Nghe giọng cháu. Cách chính: ghi âm ngắn rồi gửi trạm AI (Qwen ASR, dùng được cả ở Trung Quốc).
@@ -660,6 +663,31 @@
     $("#progress-bar").style.width = Math.round(((s.i + 1) / s.steps.length) * 100) + "%";
   }
 
+  /* Màn học như sân khấu tranh: chỉ để lượt đang học trước mắt cháu.
+     Các câu trước được cất đi (vẫn còn trong trang), bấm "Xem lại" để mở. */
+  function stageTurn() {
+    const log = $("#log");
+    const msgs = $$(".msg:not(.past)", log);
+    if (!msgs.length) return;
+    msgs.forEach((m) => m.classList.add("past"));
+    log.classList.remove("show-past");
+    let b = $(".past-toggle", log);
+    if (!b) {
+      b = document.createElement("button");
+      b.className = "past-toggle";
+      b.onclick = () => {
+        const open = log.classList.toggle("show-past");
+        b.setAttribute("aria-expanded", open);
+        b.innerHTML = (open ? IC.up || "" : IC.again) + (open ? " Ẩn các câu trước" : " Xem lại các câu trước");
+      };
+      const scene = $(".scene", log);
+      log.insertBefore(b, scene ? scene.nextSibling : log.firstChild);
+    }
+    b.setAttribute("aria-expanded", "false");
+    b.innerHTML = IC.again + " Xem lại các câu trước";
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
   function scrollDown() {
     requestAnimationFrame(() => {
       window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "smooth" });
@@ -848,6 +876,12 @@
   /* ----- Ô trả lời ----- */
   function panel(html) { const p = $("#input-panel"); p.innerHTML = html; if (html) scrollDown(); return p; }
 
+  function waitPanel() {
+    const who = state.char === "ba" ? "Bà" : "Ông";
+    const p = panel(`<div class="wait-row" role="status"><span class="wait-dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="wait-text">${who} đang nói…</span><button class="btn btn-ghost" id="btn-hush">${IC.skip} Bỏ qua</button></div>`);
+    $("#btn-hush", p).onclick = () => stopSpeak();
+  }
+
   function showContinue(label = "Tiếp") {
     const p = panel(`<button class="btn btn-big" id="btn-next">${label} ${IC.send}</button>`);
     $("#btn-next", p).onclick = () => { stopSpeak(); next(); };
@@ -923,9 +957,9 @@
     "Đúng rồi! Cháu giỏi quá!", "Giỏi lắm cháu ơi!", "Hay quá! Cháu nhớ giỏi thật!",
     "Đúng rồi, {X} thương cháu quá!", "Tuyệt vời! Cháu thông minh lắm!"
   ];
+  // sau câu trả lời chưa đúng: động viên, không khen "giỏi" để cháu không hiểu nhầm là đúng
   const ENCOURAGE = [
-    "Cháu cố gắng lắm, giỏi lắm!", "Không sao đâu, cháu học nhanh lắm!",
-    "Cháu chịu khó quá, {X} vui lắm!", "Lần sau cháu nhớ ngay thôi, giỏi lắm!"
+    "Không sao đâu cháu.", "Lần sau cháu sẽ nhớ thôi.", "Mình cùng nhớ nhé."
   ];
   const REPLY_OPEN = ["Ồ, thế à!", "Hay quá!", "À, {X} hiểu rồi."];
   const READ_DONE = ["Cháu đọc hay quá!", "Giỏi lắm, đọc to rõ ràng!", "Hay lắm cháu ơi!"];
@@ -954,6 +988,7 @@
     if (s.i >= s.steps.length) { finish(); return; }
     const step = s.steps[s.i];
     panel("");
+    stageTurn();
     if (s.mode === "bedtime") {
       const p = panel(`<div class="btn-row"><button class="btn btn-ghost" id="btn-bt-stop">${IC.check} Dừng nghe</button></div>`);
       $("#btn-bt-stop", p).onclick = () => { stopSpeak(); s.i = s.steps.length; finish(); };
@@ -986,7 +1021,7 @@
       onAnswer: async (txt, alts, idx, src) => {
         kidSay(txt);
         if (src !== "tap") recordSaid(null, false);
-        panel("");
+        waitPanel();
         await wait(350);
         if (step.open) {
           const head = idx == null ? pick(REPLY_OPEN) + " " : "";
@@ -1039,7 +1074,7 @@
       if (!txt) { gpSay(pick(READ_DONE), { cls: "praise" }); showContinue(); return; }
       if (best >= READ_PASS || s.tries >= 1) {
         confetti();
-        gpSay((best >= READ_PASS ? pick(READ_OK) : "Cháu cố gắng lắm! Mình cùng đọc lại một lần nữa nhé: " + step.text), { cls: "praise" });
+        gpSay((best >= READ_PASS ? pick(READ_OK) : "Mình cùng đọc lại một lần nữa nhé: " + step.text), { cls: "praise" });
         showContinue();
       } else {
         s.tries++;
@@ -1336,7 +1371,7 @@
         else if (st.t === "repeat") {
           add("Cháu đọc theo nhé: " + st.text);
           add("Gần đúng rồi cháu ơi! Cháu nghe {X} đọc lại nhé: " + st.text);
-          add("Cháu cố gắng lắm! Mình cùng đọc lại một lần nữa nhé: " + st.text);
+          add("Mình cùng đọc lại một lần nữa nhé: " + st.text);
         } else { add(st.text); add(st.recast); add(st.yes); add(st.reply); }
       });
     }));
