@@ -75,7 +75,7 @@ export default {
     try {
       const r = await fetch(base + "/chat/completions", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: "Bearer " + env.DASHSCOPE_API_KEY },
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + String(env.DASHSCOPE_API_KEY).trim() },
         body: JSON.stringify({
           model: env.MODEL || "qwen-plus",
           messages: [{ role: "system", content: SYSTEM(persona) }, ...msgs],
