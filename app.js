@@ -149,7 +149,7 @@
   }, { once: true });
 
   /* Biểu cảm nhân vật: "happy" (vui), "nod" (gật đầu), "listen" (nghiêng đầu nghe) */
-  const MOODS = ["happy", "nod", "listen"];
+  const MOODS = ["happy", "nod", "listen", "think"];
   let moodTimer = null;
   function setMood(mood, ms) {
     const els = $$('[data-svg="current"]');
@@ -265,7 +265,57 @@
     show(prev, false);
   }
 
+  /* Cây khế: mỗi ngày cháu học là cây ra thêm một quả. Nghỉ học cây vẫn xanh, không bao giờ héo. */
+  function practiceDays() {
+    const st = stats();
+    const days = new Set(Object.keys(st.days).filter((d) => st.days[d] >= 30));
+    st.lessons.forEach((l) => l.date && days.add(l.date));
+    return days;
+  }
+  const KHE_SLOTS = [[40,34],[52,26],[66,28],[78,36],[34,46],[48,42],[62,40],[76,48],[88,44],[44,54],[58,52],[70,58],
+    [30,36],[86,32],[56,34],[38,58],[82,58],[64,48],[50,62],[24,48],[94,52],[72,22],[46,22],[60,60]];
+  function kheTree(n, fresh) {
+    const K = "#2b1d14", sw = `stroke="${K}" stroke-width="1.6"`;
+    const shown = Math.min(n, KHE_SLOTS.length);
+    const fruit = (x, y, i) => {
+      const r = ((i * 37) % 50) - 25;
+      const cls = fresh && i === shown - 1 ? ' class="fruit fruit-new"' : ' class="fruit"';
+      return `<g transform="translate(${x} ${y})"><g${cls}><g transform="rotate(${r})"><path d="M0 -6 l0 -2" stroke="${K}" stroke-width="1.4"/>
+        <ellipse rx="3.6" ry="5.4" fill="#f2c230" ${sw}/><path d="M0 -5 V5 M-1.8 -4 Q-2.6 0 -1.8 4" stroke="#b5861a" stroke-width=".9" fill="none"/></g></g></g>`;
+    };
+    const extra = n - shown;
+    const bird = n >= 7 ? `<g transform="translate(98 16)"><g class="khe-bird"><path d="M-8 2 Q0 -6 8 0 Q2 4 -8 2Z" fill="#c0392b" ${sw}/>
+      <path d="M-2 0 Q-6 -10 4 -12 Q2 -4 2 0Z" fill="#e9b949" ${sw}/><circle cx="7" cy="-1" r="3" fill="#c0392b" ${sw}/><path d="M10 -1 l4 1 l-4 1" fill="#e9b949" ${sw}/>
+      <path d="M-8 2 q-8 2 -12 8 q6 -2 10 -4" fill="#3f7d4e" ${sw}/></g></g>` : "";
+    return `<svg viewBox="0 0 120 100" xmlns="http://www.w3.org/2000/svg">
+      <path d="M4 94 Q60 86 116 94 V100 H4Z" fill="#8fbf6a" ${sw}/>
+      <path d="M54 94 C56 80 56 70 52 60 M60 94 C60 78 62 68 70 58 M57 76 C50 70 44 66 38 64" stroke="${K}" stroke-width="7" fill="none" stroke-linecap="round"/>
+      <path d="M54 94 C56 80 56 70 52 60 M60 94 C60 78 62 68 70 58 M57 76 C50 70 44 66 38 64" stroke="#8a5a2b" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <g class="khe-crown">
+        <circle cx="60" cy="40" r="28" fill="#3f7d4e" ${sw}/><circle cx="36" cy="46" r="18" fill="#3f7d4e" ${sw}/><circle cx="84" cy="46" r="18" fill="#3f7d4e" ${sw}/>
+        <circle cx="46" cy="26" r="16" fill="#4f9a5e" ${sw}/><circle cx="74" cy="26" r="16" fill="#4f9a5e" ${sw}/><circle cx="60" cy="54" r="16" fill="#4f9a5e" ${sw}/>
+        <path d="M40 40 q4 -4 8 0 M66 34 q4 -4 8 0 M54 60 q4 -4 8 0 M28 50 q3 -3 6 0 M82 52 q3 -3 6 0" stroke="#2c5e38" stroke-width="1.2" fill="none"/>
+        ${KHE_SLOTS.slice(0, shown).map(([x, y], i) => fruit(x, y, i)).join("")}
+      </g>
+      ${extra > 0 ? `<g transform="translate(88 82)"><path d="M-12 -4 H12 L9 8 H-9Z" fill="#c98f4a" ${sw}/><ellipse cx="-4" cy="-5" rx="3" ry="4" fill="#f2c230" ${sw}/><ellipse cx="4" cy="-5" rx="3" ry="4" fill="#f2c230" ${sw}/>
+        <text x="0" y="6" text-anchor="middle" font-size="7" font-weight="800" fill="${K}">+${extra}</text></g>` : ""}
+      ${bird}
+    </svg>`;
+  }
+  function renderKhe() {
+    const days = practiceDays();
+    const n = days.size, done = days.has(today());
+    $("#khe-art").innerHTML = kheTree(n, done);
+    const x = state.char === "ba" ? "bà" : "ông";
+    $("#khe-note").textContent = n === 0
+      ? `Học với ${x} hôm nay, cây sẽ ra quả đầu tiên đó!`
+      : done
+        ? `${n} quả khế ngọt! Hôm nay cây đã ra quả mới rồi.` + (n >= 7 ? " Chim phượng bay về ăn khế kìa!" : "")
+        : `${n} quả khế. Học một chút với ${x} để cây ra thêm quả nhé!`;
+  }
+
   function setGreeting() {
+    renderKhe();
     const x = state.char === "ba" ? "Bà" : "Ông";
     const n = (settings.name || "").trim();
     $("#greet-text").textContent = n
@@ -377,9 +427,13 @@
 
   /* ===================== Dựng các lượt cho từng chế độ ===================== */
   function buildSteps(mode, item) {
-    if (mode === "stories" || mode === "chats") return item.steps.slice();
+    // mỗi đoạn kể của truyện gắn một tranh minh họa (art.js → storyPic)
+    let k = 0;
+    const withPic = (x) => (x.t === "say" ? Object.assign({}, x, { pic: k++ }) : x);
+    if (mode === "stories") return item.steps.map(withPic);
+    if (mode === "chats") return item.steps.slice();
     if (mode === "bedtime") return [{ t: "say", text: "Cháu nằm xuống, nhắm mắt lại nhé. {Xc} kể chuyện " + item.title + " cho cháu nghe." }]
-      .concat(item.steps.filter((x) => x.t === "say"))
+      .concat(item.steps.filter((x) => x.t === "say").map(withPic))
       .concat([{ t: "say", text: "Hết truyện rồi. Chúc cháu ngủ ngon, mơ thật đẹp nhé!" }]);
     if (mode === "rhymes") {
       const steps = [{ t: "say", text: `Bây giờ {X} đọc ${item.kind.toLowerCase()} “${item.title}”. Cháu nghe trước nhé.` }];
@@ -471,6 +525,13 @@
     saveStats(st);
   }
 
+  /* Tranh minh họa cho đoạn kể (nếu truyện có tranh) */
+  function picOf(s, step) {
+    const art = window.OBK_ART;
+    if (step.pic == null || !s.item || !art || !art.storyPic) return "";
+    try { return art.storyPic(s.item.id, step.pic) || ""; } catch (e) { return ""; }
+  }
+
   /* Bong bóng lời của ông/bà */
   function gpSay(text, opts = {}) {
     const t = fill(text);
@@ -487,7 +548,9 @@
       const m = markup(t); found = m.found; html = m.html;
     }
     found = [...new Set(found)];
-    wrap.innerHTML = `<div class="text">${html}</div><div class="msg-tools"></div>`;
+    const pic = opts.pic ? `<div class="story-pic" aria-hidden="true">${opts.pic}</div>` : "";
+    wrap.innerHTML = `${pic}<div class="text">${html}</div><div class="msg-tools"></div>`;
+    if (pic) wrap.classList.add("has-pic");
     const tools = $(".msg-tools", wrap);
     const say = opts.lines ? opts.lines.map(fill).join(". ") : t;
     const bSpeak = document.createElement("button");
@@ -657,6 +720,8 @@
     $$(".choice", p).forEach((b) => (b.onclick = () => submit(b.textContent, null, +b.dataset.i)));
     $$(".suggest button", p).forEach((b) => (b.onclick = () => { $("#answer").value = b.textContent; $("#answer").focus(); }));
     $("form", p).onsubmit = (e) => { e.preventDefault(); submit($("#answer").value); };
+    const ans = $("#answer", p);
+    if (ans) { ans.addEventListener("focus", () => setMood("listen")); ans.addEventListener("blur", () => setMood(null)); }
     const mic = $("#btn-mic", p);
     if (mic) mic.onclick = () => listen(
       (alts) => submit(alts[0], alts, null, "voice"),
@@ -726,14 +791,14 @@
     if (s.mode === "bedtime") {
       const p = panel(`<div class="btn-row"><button class="btn btn-ghost" id="btn-bt-stop">${IC.check} Dừng nghe</button></div>`);
       $("#btn-bt-stop", p).onclick = () => { stopSpeak(); s.i = s.steps.length; finish(); };
-      await gpSay(step.text, { force: true }).spoken;
+      await gpSay(step.text, { force: true, pic: picOf(s, step) }).spoken;
       if (state.session !== s || s.i >= s.steps.length) return;
       await wait(1400);
       if (state.session === s) next();
       return;
     }
     if (step.t === "say") {
-      gpSay(step.text);
+      gpSay(step.text, { pic: picOf(s, step) });
       showContinue();
     } else if (step.t === "poem") {
       gpSay("", { lines: step.lines, cls: "poem" });
@@ -772,7 +837,7 @@
           gpSay(pick(PRAISE) + (step.yes ? " " + step.yes : ""), { cls: "praise" });
         } else {
           // Recast: nhắc lại câu đúng một cách tự nhiên, rồi khen
-          setMood("nod", 1400);
+          setMood("think", 2400);
           SND.sfx("gentle");
           await gpSay(step.recast + " " + pick(ENCOURAGE), { cls: "praise" }).spoken;
           if (state.session !== s) return;

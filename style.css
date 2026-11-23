@@ -139,6 +139,67 @@ main { max-width: 720px; margin: 0 auto; padding: 22px 16px 48px; }
 .talking .mouth { animation: talk .2s ease-in-out infinite alternate; }
 @keyframes talk { from { transform: scaleY(1); } to { transform: scaleY(2.6) scaleX(.9); } }
 
+/* Phản ứng sinh động: vỗ tay, khum tai nghe, "à…" */
+.hands, .ear-hand, .ponder { opacity: 0; transition: opacity .25s ease; pointer-events: none; }
+.happy .hands { opacity: 1; }
+.hand-l, .hand-r { transform-box: view-box; }
+.hand-l { transform-origin: 74px 196px; }
+.hand-r { transform-origin: 126px 196px; }
+.happy .hand-l { animation: clapL .32s ease-in-out infinite alternate; }
+.happy .hand-r { animation: clapR .32s ease-in-out infinite alternate; }
+@keyframes clapL { from { transform: translateX(-12px) rotate(-14deg); } to { transform: translateX(0) rotate(0); } }
+@keyframes clapR { from { transform: translateX(12px) rotate(14deg); } to { transform: translateX(0) rotate(0); } }
+.clap-spark { opacity: 0; }
+.happy .clap-spark { animation: spark .64s steps(1) infinite; }
+@keyframes spark { 0% { opacity: 0; } 50% { opacity: 1; } }
+.listen .ear-hand { opacity: 1; }
+.sound-arcs path { animation: arc 1s ease-out infinite; }
+.sound-arcs path:last-child { animation-delay: .25s; }
+@keyframes arc { 0% { opacity: 0; } 40% { opacity: 1; } 100% { opacity: 0; } }
+.think .ponder { opacity: 1; }
+.ponder { transform-box: view-box; transform-origin: 140px 60px; }
+.think .ponder { animation: pop-in .35s cubic-bezier(.3,1.6,.5,1); }
+@keyframes pop-in { from { transform: scale(.3); } to { transform: scale(1); } }
+.think .head { animation: ponder 1.4s ease-in-out; transform: rotate(6deg); }
+@keyframes ponder { 0% { transform: rotate(0); } 30% { transform: rotate(8deg); } 60% { transform: rotate(4deg); } 100% { transform: rotate(6deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .happy .hand-l, .happy .hand-r, .sound-arcs path, .think .head, .think .ponder { animation: none; }
+}
+
+/* Tranh truyện theo từng đoạn (phong cách Đông Hồ) */
+.story-pic { width: min(300px, 78vw); margin: 0 0 8px; border: 3px solid var(--ink); border-radius: 14px; overflow: hidden;
+  background: #f6e9c9; box-shadow: var(--block-sm); animation: pic-in .55s cubic-bezier(.3,1.4,.5,1) backwards; }
+.story-pic svg { display: block; width: 100%; height: auto; }
+@keyframes pic-in { from { opacity: 0; transform: translateY(10px) scale(.94) rotate(-1.5deg); } }
+.story-pic .pic-bob { transform-box: fill-box; animation: pic-bob 2.4s ease-in-out infinite alternate; }
+@keyframes pic-bob { to { transform: translateY(-2.5px); } }
+.story-pic .pic-fly { transform-box: fill-box; animation: pic-fly 3.2s ease-in-out infinite alternate; }
+@keyframes pic-fly { 0% { transform: translate(0, 0); } 50% { transform: translate(3px, -3px); } 100% { transform: translate(6px, 0); } }
+.story-pic .pic-swing { transform-box: fill-box; transform-origin: top center; animation: pic-swing 2s ease-in-out infinite alternate; }
+@keyframes pic-swing { from { transform: rotate(-6deg); } to { transform: rotate(6deg); } }
+.story-pic .pic-fall { transform-box: fill-box; animation: pic-fall 2.6s ease-in infinite; }
+@keyframes pic-fall { 0% { transform: translateY(-4px); opacity: 0; } 20% { opacity: 1; } 100% { transform: translateY(10px); opacity: 0; } }
+body.bedtime .story-pic { filter: brightness(.82) saturate(.85); }
+@media (prefers-reduced-motion: reduce) { .story-pic, .story-pic * { animation: none !important; } }
+
+/* Cây khế (chuỗi ngày học nhẹ nhàng, không bao giờ héo) */
+.khe-card { display: flex; align-items: center; gap: 12px; margin: 16px 0 4px; padding: 10px 14px; background: var(--card);
+  border: 3px solid var(--ink); border-radius: 18px; box-shadow: var(--block-sm); }
+.khe-art { width: 118px; flex: none; }
+.khe-art svg { display: block; width: 100%; height: auto; }
+.khe-text { display: flex; flex-direction: column; gap: 2px; line-height: 1.3; }
+.khe-text b { font-family: var(--head); font-size: 1.15rem; color: var(--son); }
+.khe-text span { font-size: .92rem; font-weight: 700; color: var(--ink-soft); }
+.khe-crown { transform-box: fill-box; transform-origin: bottom center; animation: khe-sway 3.5s ease-in-out infinite alternate; }
+@keyframes khe-sway { from { transform: rotate(-1.5deg); } to { transform: rotate(1.5deg); } }
+.fruit { transform-box: fill-box; transform-origin: top center; }
+.fruit-new { animation: fruit-pop .7s cubic-bezier(.3,1.7,.5,1) .4s backwards, fruit-glow 1.6s ease-in-out 1.2s 3; }
+@keyframes fruit-pop { from { transform: scale(0); } }
+@keyframes fruit-glow { 50% { filter: drop-shadow(0 0 3px #fff3a0) brightness(1.15); } }
+.khe-bird { animation: bird-bob 1.8s ease-in-out infinite alternate; }
+@keyframes bird-bob { to { transform: translateY(-2.5px); } }
+@media (prefers-reduced-motion: reduce) { .khe-crown, .fruit-new, .khe-bird { animation: none; } }
+
 /* ---------- Chọn chế độ ---------- */
 .greet { display: flex; align-items: center; gap: 12px; margin-bottom: 22px; }
 .char-mini { width: 96px; flex: none; filter: drop-shadow(3px 3px 0 var(--ink)); }

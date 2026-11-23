@@ -6,6 +6,8 @@
  *   .eyes-open   – mắt thường (chớp mắt)
  *   .eyes-happy  – mắt cười (hiện khi cháu trả lời đúng)
  *   .mouth       – miệng (mấp máy khi đang nói)
+ *   .hands       – hai tay vỗ (vui)   .ear-hand – tay khum sau tai (nghe)
+ *   .ponder      – bong bóng "à…" (nghĩ, khi cháu nói chưa đúng)
  */
 (function () {
   const INK = "#2b1d14";
@@ -40,6 +42,38 @@
       <path d="M109 ${y + 1} Q115 ${y - 6} 121 ${y + 1}" stroke="${INK}" stroke-width="3" fill="none" stroke-linecap="round"/>
     </g>`;
 
+
+  /* Tay vỗ (vui), tay khum sau tai (đang nghe), dấu "à…" (nghĩ, khi cháu nói chưa đúng) */
+  const hand = (x, y, flip) => `<g transform="translate(${x} ${y}) scale(${flip} 1)">
+      <path d="M-9 8 C-12 -2 -8 -12 0 -13 C8 -12 11 -3 8 8Z" fill="#efbf90" stroke="${INK}" stroke-width="2.2"/>
+      <path d="M-4 -6 L-4 2 M1 -8 L1 2 M5 -6 L5 2" stroke="#c98f63" stroke-width="1.3" stroke-linecap="round"/>
+    </g>`;
+  const extras = (sleeve) => `
+    <g class="hands">
+      <path d="M58 206 C62 190 70 184 82 180 L88 180 C78 190 72 200 70 206Z" fill="${sleeve}" stroke="${INK}" stroke-width="2.5"/>
+      <path d="M142 206 C138 190 130 184 118 180 L112 180 C122 190 128 200 130 206Z" fill="${sleeve}" stroke="${INK}" stroke-width="2.5"/>
+      <g class="hand-l">${hand(90, 170, 1)}</g>
+      <g class="hand-r">${hand(110, 170, -1)}</g>
+      <g class="clap-spark" stroke="#e9b949" stroke-width="3" stroke-linecap="round">
+        <path d="M100 150 L100 140 M86 154 L80 146 M114 154 L120 146"/>
+      </g>
+    </g>`;
+
+  const ponder = `
+    <g class="ponder">
+      <path d="M136 14 h40 a8 8 0 0 1 8 8 v18 a8 8 0 0 1 -8 8 h-26 l-8 8 v-8 h-6 a8 8 0 0 1 -8 -8 v-18 a8 8 0 0 1 8 -8z" fill="#fffaf0" stroke="${INK}" stroke-width="2.5"/>
+      <text x="156" y="38" text-anchor="middle" font-family="Baloo 2, sans-serif" font-weight="800" font-size="17" fill="#b3261e">à…</text>
+    </g>`;
+  const earHand = (sleeve) => `
+      <g class="ear-hand">
+        <g class="sound-arcs" stroke="#b3261e" stroke-width="3.5" fill="none" stroke-linecap="round">
+          <path d="M164 88 q6 10 0 20"/><path d="M171 82 q10 16 0 32"/>
+        </g>
+        <path d="M150 140 C148 126 148 116 150 108 L158 110 C158 120 160 130 164 140Z" fill="${sleeve}" stroke="${INK}" stroke-width="2.2"/>
+        <path d="M144 112 C142 100 144 86 152 82 C160 84 160 96 158 112Z" fill="#efbf90" stroke="${INK}" stroke-width="2.2"/>
+        <path d="M148 92 q4 -2 7 1 M147 99 q4 -2 8 1" stroke="#c98f63" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+      </g>`;
+
   const ong = frame("#b3261e", "#e9b949").replace("__BODY__", `
     <!-- áo dài the, cổ trắng -->
     <path d="M26 206 C30 156 62 134 100 134 C138 134 170 156 174 206Z" fill="#2f3e66" stroke="${INK}" stroke-width="3"/>
@@ -72,7 +106,9 @@
       <path d="M92 132 Q96 148 100 160 M108 132 Q104 148 100 160" stroke="#d8cfc0" stroke-width="1.5" fill="none"/>
       <ellipse class="mouth" cx="100" cy="121" rx="6" ry="2.6" fill="#8b2e22" stroke="${INK}" stroke-width="1.2"/>
       <path d="M100 114 C94 110 84 112 78 118 C86 116 94 118 100 117 C106 118 114 116 122 118 C116 112 106 110 100 114Z" fill="#fffaf0" stroke="${INK}" stroke-width="2"/>
-    </g>`);
+      ${earHand("#2f3e66")}
+    </g>
+    ${extras("#2f3e66")}`) + ponder;
 
   const ba = frame("#3f7d4e", "#c0392b").replace("__BODY__", `
     <!-- áo tứ thân, yếm đỏ, thắt lưng xanh -->
@@ -102,7 +138,9 @@
       <path d="M97 100 Q100 110 104 106" stroke="${INK}" stroke-width="2" fill="none" stroke-linecap="round"/>
       <path d="M86 117 Q100 129 114 117" stroke="${INK}" stroke-width="2.5" fill="#c0392b" stroke-linecap="round"/>
       <ellipse class="mouth" cx="100" cy="121" rx="5.5" ry="2.4" fill="#8b2e22" stroke="${INK}" stroke-width="1.2"/>
-    </g>`);
+      ${earHand("#8a5a2b")}
+    </g>
+    ${extras("#8a5a2b")}`) + ponder;
 
   window.OBK_SVG = {
     ong: `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ông">${ong}</svg>`,

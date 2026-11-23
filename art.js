@@ -163,6 +163,47 @@
   };
   scenes.ai = scenes.chats;
 
+  /* ---------- Tranh nhỏ cho từng đoạn truyện (đổi theo lời kể) ---------- */
+  const girl = (x, y, dress, hair = K, mood = 1) => `<g transform="translate(${x} ${y})"><path d="M-9 30 L-6 8 H6 L9 30Z" fill="${dress}" ${sw}/><circle cx="0" cy="0" r="8" fill="${S}" ${sw}/><path d="M-8 -1 Q-8 -10 0 -10 Q8 -10 8 -1 Q4 -6 0 -5 Q-4 -6 -8 -1Z" fill="${hair}"/><path d="M-3 3 q3 ${2 * mood} 6 0" stroke="${K}" stroke-width="1.4" fill="none"/><circle cx="-3" cy="0" r="1" fill="${K}"/><circle cx="3" cy="0" r="1" fill="${K}"/></g>`;
+  const man = (x, y, robe, crown) => `<g transform="translate(${x} ${y})"><path d="M-11 32 L-8 8 H8 L11 32Z" fill="${robe}" ${sw}/><circle cx="0" cy="0" r="8.5" fill="${S}" ${sw}/>${crown ? `<path d="M-8 -6 L-8 -14 L-4 -9 L0 -16 L4 -9 L8 -14 L8 -6Z" fill="${Y}" ${sw}/>` : `<path d="M-8 -3 Q0 -14 8 -3Z" fill="${K}"/>`}<circle cx="-3" cy="0" r="1" fill="${K}"/><circle cx="3" cy="0" r="1" fill="${K}"/><path d="M-3 4 q3 2 6 0" stroke="${K}" stroke-width="1.4" fill="none"/></g>`;
+  const sea = `<path d="M0 62 Q25 56 50 62 T100 62 V80 H0Z" fill="#6fa6c9" ${sw}/><path class="wave" d="M8 70 q5 -3 10 0 M60 72 q5 -3 10 0" stroke="${W}" stroke-width="1.6" fill="none"/>`;
+  const field = `<path d="M0 64 Q50 56 100 64 V80 H0Z" fill="#9cc46a" ${sw}/>`;
+  const fishS = (x, y, c = Y) => `<g class="pic-bob" transform="translate(${x} ${y})"><path d="M0 0 Q10 -8 20 0 Q10 8 0 0Z" fill="${c}" ${sw}/><path d="M20 0 L28 -6 L27 0 L28 6Z" fill="${R}" ${sw}/><circle cx="5" cy="-1" r="1.3" fill="${K}"/></g>`;
+  const basket = (x, y, full) => `<g transform="translate(${x} ${y})"><path d="M-12 0 H12 L9 14 H-9Z" fill="#c99a63" ${sw}/><path d="M-10 5 H10 M-9 10 H9" stroke="${K}" stroke-width="1" opacity=".5"/>${full ? `<path d="M-10 0 Q-6 -7 -2 -2 Q2 -8 6 -2 Q9 -6 11 0" fill="#e2703a" ${sw}/>` : ""}</g>`;
+  const bag = (x, y, sc = 1) => `<g transform="translate(${x} ${y}) scale(${sc})"><path d="M-10 -8 Q0 -14 10 -8 L13 12 Q0 18 -13 12Z" fill="#c99a63" ${sw}/><path d="M-6 -10 L6 -10" stroke="${R}" stroke-width="3"/><circle cx="-4" cy="2" r="3" fill="${Y}" ${sw}/><circle cx="4" cy="5" r="3" fill="${Y}" ${sw}/></g>`;
+  const bird = (x, y, sc = 1) => `<g class="pic-fly" transform="translate(${x} ${y}) scale(${sc})"><path d="M0 0 q12 -14 26 0 q14 -14 26 0 q-12 6 -26 4 q-14 2 -26 -4z" fill="#3a2f2a" ${sw}/><path d="M26 2 l5 5 l-7 0z" fill="${Y}" ${sw}/></g>`;
+  const khe = (x, y) => `<path d="M${x} ${y} l3 -8 l3 8 l8 -2 l-6 6 l4 7 l-9 -4 l-9 4 l4 -7 l-6 -6z" fill="${Y}" ${sw}/>`;
+  const melon = (x, y, cut) => cut ? `<g transform="translate(${x} ${y})"><path d="M-14 0 A14 14 0 0 0 14 0Z" fill="${G}" ${sw}/><path d="M-11 0 A11 11 0 0 0 11 0Z" fill="${R}"/><circle cx="-4" cy="4" r="1" fill="${K}"/><circle cx="3" cy="6" r="1" fill="${K}"/><circle cx="5" cy="2" r="1" fill="${K}"/></g>` : `<g transform="translate(${x} ${y})"><ellipse rx="14" ry="10" fill="${G}" ${sw}/><path d="M-8 -7 q-3 7 0 14 M0 -10 q-3 10 0 20 M8 -7 q-3 7 0 14" stroke="#9cc46a" stroke-width="2" fill="none"/></g>`;
+  const island = `<path d="M18 64 Q50 34 82 64Z" fill="#e9cf8f" ${sw}/><path d="M50 50 q-1 -18 3 -26" stroke="#7a5230" stroke-width="3" fill="none"/><path d="M53 24 q-12 -3 -18 4 M53 24 q10 -4 18 2 M53 24 q-4 7 -11 8 M53 24 q6 6 12 7" stroke="${G}" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+  const sky2 = (c) => `<rect width="100" height="80" fill="${c}"/>`;
+  const storyPics = {
+    "tam-cam": [
+      sky2("#fbe8c3") + field + girl(36, 34, R) + girl(64, 34, "#7a5fa8"),
+      sky2("#dff0f5") + field + `<path d="M0 66 Q50 60 100 66 V80 H0Z" fill="#6fa6c9" ${sw}/>` + girl(30, 32, R) + basket(56, 52, true) + `<path d="M70 18 l4 8 M78 14 l2 8" stroke="${K}" stroke-width="1.5"/>`,
+      sky2("#dff0f5") + `<path d="M0 54 Q50 48 100 54 V80 H0Z" fill="#6fa6c9" ${sw}/>` + girl(28, 26, R) + basket(70, 50, false) + girl(76, 22, "#7a5fa8", K, -1),
+      sky2("#fff3c4") + `<circle cx="34" cy="36" r="22" fill="${Y}" opacity=".35"/>` + `<g transform="translate(34 30)"><circle r="9" fill="${S}" ${sw}/><path d="M-12 32 Q-12 8 0 8 Q12 8 12 32Z" fill="#e2703a" ${sw}/><circle cx="-3" cy="0" r="1" fill="${K}"/><circle cx="3" cy="0" r="1" fill="${K}"/><path d="M-3 4 q3 2 6 0" stroke="${K}" stroke-width="1.4" fill="none"/><path d="M-7 -6 Q0 -14 7 -6" fill="${K}"/></g>` + `<ellipse cx="72" cy="60" rx="20" ry="9" fill="#6fa6c9" ${sw}/>` + fishS(62, 58),
+      sky2("#fbe3c3") + [20, 50, 80].map((x, i) => `<g class="pic-swing" style="transform-origin:${x}px 0"><line x1="${x}" y1="0" x2="${x}" y2="10" stroke="${K}" stroke-width="1.2"/><ellipse cx="${x}" cy="18" rx="7" ry="8" fill="${[R, Y, R][i]}" ${sw}/></g>`).join("") + girl(50, 44, "#f0a8c0"),
+      sky2("#fbe8c3") + `<path d="M0 66 H100 V80 H0Z" fill="#c99a63" ${sw}/>` + `<g class="pic-bob"><path d="M36 50 Q36 40 46 40 L58 46 Q66 48 66 54 L36 54Z" fill="${R}" ${sw}/><path d="M42 46 q4 -3 8 0 q4 3 8 0" stroke="${Y}" stroke-width="1.6" fill="none"/></g>` + `<path d="M14 20 l4 6 M84 16 l-3 7 M76 30 l6 2" stroke="${Y}" stroke-width="2" stroke-linecap="round"/>`,
+      sky2("#fff3c4") + `<rect x="18" y="58" width="64" height="10" fill="${R}" ${sw}/>` + man(38, 28, "#e8a317", true) + `<g transform="translate(64 28)"><path d="M-10 32 L-7 8 H7 L10 32Z" fill="#f0a8c0" ${sw}/><circle r="8" fill="${S}" ${sw}/><path d="M-7 -6 L-7 -12 L-3 -8 L0 -14 L3 -8 L7 -12 L7 -6Z" fill="${Y}" ${sw}/><circle cx="-3" cy="0" r="1" fill="${K}"/><circle cx="3" cy="0" r="1" fill="${K}"/><path d="M-3 3 q3 2 6 0" stroke="${K}" stroke-width="1.4" fill="none"/></g>`
+    ],
+    "dua-hau": [
+      sky2("#fff3c4") + man(36, 30, "#e8a317", true) + man(66, 32, "#3f7d4e"),
+      sky2("#cfe9f2") + sea + `<g class="pic-bob"><path d="M30 58 h36 l-6 8 h-24z" fill="#7a5230" ${sw}/><path d="M48 58 V36 L64 56Z" fill="${W}" ${sw}/></g>` + `<path d="M74 60 Q84 50 94 60Z" fill="#e9cf8f" ${sw}/>`,
+      sky2("#cfe9f2") + sea + island + `<path d="M24 62 L32 52 L40 62Z" fill="#a4442a" ${sw}/>`,
+      sky2("#cfe9f2") + sea + island + bird(10, 16, .6) + `<g fill="${K}"><ellipse cx="40" cy="30" rx="1.5" ry="2.4"/><ellipse cx="46" cy="38" rx="1.5" ry="2.4"/></g>` + melon(70, 56, false),
+      sky2("#cfe9f2") + sea + `<g class="pic-bob">` + melon(30, 62, false) + `</g><g class="pic-bob"><path d="M58 56 h34 l-6 8 h-22z" fill="#7a5230" ${sw}/><path d="M74 56 V36 L88 54Z" fill="${W}" ${sw}/></g>`,
+      sky2("#fbe8c3") + melon(34, 46, false) + melon(64, 50, true) + `<path d="M10 20 l4 6 M88 18 l-3 7" stroke="${Y}" stroke-width="2" stroke-linecap="round"/>`
+    ],
+    "cay-khe": [
+      sky2("#fbeecf") + field + man(30, 30, "#7a5230") + `<path d="M70 64 q2 -16 -1 -26" stroke="#7a5230" stroke-width="4" fill="none"/><circle cx="70" cy="30" r="14" fill="${G}" ${sw}/>` + khe(66, 30),
+      sky2("#fbeecf") + field + `<path d="M50 64 q3 -20 -1 -34" stroke="#7a5230" stroke-width="5" fill="none"/><g class="sway-tree"><circle cx="50" cy="26" r="22" fill="${G}" ${sw}/>` + khe(38, 22) + khe(56, 16) + khe(54, 34) + `</g>` + bird(66, 8, .5),
+      sky2("#fbeecf") + bird(14, 30, 1.1) + bag(80, 50),
+      sky2("#cfe9f2") + sea + `<path d="M56 64 Q74 40 92 64Z" fill="#e9cf8f" ${sw}/>` + `<circle cx="70" cy="56" r="3" fill="${Y}" ${sw}/><circle cx="78" cy="58" r="3" fill="${Y}" ${sw}/>` + bird(6, 22, .9),
+      sky2("#cfe9f2") + sea + bird(30, 14, .9) + `<g class="pic-fall">` + bag(40, 44, 1.3) + `</g>`
+    ]
+  };
+  window.OBK_ART.storyPic = (id, i) => { const a = storyPics[id]; return a && a[i] ? svg(a[i], "0 0 100 80") : ""; };
+
   window.OBK_ART.sticker = (id) => { const s = stickers.find((x) => x.id === id); return s ? svg(s.body) : ""; };
   window.OBK_ART.stickers = stickers.map(({ id, name }) => ({ id, name }));
   window.OBK_ART.scene = (id, mode) => {
