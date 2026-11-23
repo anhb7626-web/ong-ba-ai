@@ -33,6 +33,8 @@
     { autoread: true, rate: 0.9, ai: !!CFG.aiEndpoint, endpoint: "", music: true, sfx: true, fx: true, name: "" },
     store.get("settings", {})
   );
+  // Máy đã lưu cài đặt từ hồi chưa có trạm AI (ai=false) → tự bật AI, trừ khi phụ huynh đã chủ động tắt
+  if (CFG.aiEndpoint && !settings.aiChosen) settings.ai = true;
   const saveSettings = () => store.set("settings", settings);
 
   function stats() {
@@ -987,7 +989,7 @@
     $("#set-music").onchange = (e) => { settings.music = e.target.checked; saveSettings(); applyFx(); musicFollow(); };
     $("#set-sfx").onchange = (e) => { settings.sfx = e.target.checked; saveSettings(); applyFx(); };
     $("#set-fx").onchange = (e) => { settings.fx = e.target.checked; saveSettings(); applyFx(); };
-    $("#set-ai").onchange = (e) => { settings.ai = e.target.checked; saveSettings(); renderSettings(); };
+    $("#set-ai").onchange = (e) => { settings.ai = e.target.checked; settings.aiChosen = true; saveSettings(); renderSettings(); };
     $("#set-endpoint").onchange = (e) => { settings.endpoint = e.target.value.trim(); saveSettings(); renderSettings(); };
     $("#btn-test-ai").onclick = async () => {
       const el = $("#ai-status");
