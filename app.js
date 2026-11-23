@@ -403,6 +403,7 @@
     if (state.screen === "session" && screen !== "session") endSession();
     if (push && state.screen !== screen) state.history.push(state.screen);
     state.screen = screen;
+    document.body.dataset.screen = screen;
     $$(".screen").forEach((s) => (s.hidden = s.id !== "screen-" + screen));
     $("#btn-back").hidden = screen === "home";
     renderSvgSlots();
@@ -449,7 +450,7 @@
       <g class="khe-crown">
         <circle cx="60" cy="40" r="28" fill="#3f7d4e" ${sw}/><circle cx="36" cy="46" r="18" fill="#3f7d4e" ${sw}/><circle cx="84" cy="46" r="18" fill="#3f7d4e" ${sw}/>
         <circle cx="46" cy="26" r="16" fill="#4f9a5e" ${sw}/><circle cx="74" cy="26" r="16" fill="#4f9a5e" ${sw}/><circle cx="60" cy="54" r="16" fill="#4f9a5e" ${sw}/>
-        <path d="M40 40 q4 -4 8 0 M66 34 q4 -4 8 0 M54 60 q4 -4 8 0 M28 50 q3 -3 6 0 M82 52 q3 -3 6 0" stroke="#2c5e38" stroke-width="1.2" fill="none"/>
+        <g fill="#2c5e38"><path d="M40 40 q4 -5 9 -3 q-4 5 -9 3z"/><path d="M66 32 q4 -5 9 -3 q-4 5 -9 3z"/><path d="M53 60 q4 -5 9 -3 q-4 5 -9 3z"/><path d="M27 50 q3 -4 7 -2 q-3 4 -7 2z"/><path d="M82 52 q3 -4 7 -2 q-3 4 -7 2z"/></g>
         ${KHE_SLOTS.slice(0, shown).map(([x, y], i) => fruit(x, y, i)).join("")}
       </g>
       ${extra > 0 ? `<g transform="translate(88 82)"><path d="M-12 -4 H12 L9 8 H-9Z" fill="#c98f4a" ${sw}/><ellipse cx="-4" cy="-5" rx="3" ry="4" fill="#f2c230" ${sw}/><ellipse cx="4" cy="-5" rx="3" ry="4" fill="#f2c230" ${sw}/>
@@ -562,7 +563,7 @@
     lessonsOf(mode).forEach((item) => {
       const b = document.createElement("button");
       b.className = "item" + (mode === "bedtime" ? " night-item" : "");
-      let sub = mode === "rhymes" ? item.kind : mode === "stories" ? `${item.steps.length} lượt` : mode === "bedtime" ? "Chỉ nghe, không cần trả lời" : "Trò chuyện";
+      let sub = mode === "rhymes" ? item.kind : mode === "stories" ? `Khoảng ${Math.max(2, Math.round(item.steps.length / 3))} phút` : mode === "bedtime" ? "Chỉ nghe, không cần trả lời" : "Trò chuyện";
       if (item.custom) sub = "Bài của cô" + (item.by ? " " + item.by : "") + " · " + sub;
       b.innerHTML = `<span class="item-emoji">${window.OBK_ART.icon(item.id) || window.OBK_ART.icon(item.custom ? "teacher" : "stories")}</span><span>${esc(item.title)}<small>${esc(sub)}</small></span>` +
         (done.has(lessonKey(mode, item.id)) ? '<span class="check" title="Đã học">✓</span>' : "");
@@ -990,7 +991,7 @@
     panel("");
     stageTurn();
     if (s.mode === "bedtime") {
-      const p = panel(`<div class="btn-row"><button class="btn btn-ghost" id="btn-bt-stop">${IC.check} Dừng nghe</button></div>`);
+      const p = panel(`<div class="btn-row"><button class="btn btn-ghost" id="btn-bt-stop">Dừng nghe</button></div>`);
       $("#btn-bt-stop", p).onclick = () => { stopSpeak(); s.i = s.steps.length; finish(); };
       await gpSay(step.text, { force: true, pic: picOf(s, step) }).spoken;
       if (state.session !== s || s.i >= s.steps.length) return;
