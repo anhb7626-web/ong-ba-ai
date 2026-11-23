@@ -92,3 +92,20 @@ Nếu AI lỗi hoặc mất mạng, app tự mời trẻ quay về bài soạn s
 - **Chrome** (máy tính, Android) hỗ trợ đầy đủ đọc to và nhận giọng nói tiếng Việt.
 - **Safari / iPhone**: đọc to được nếu máy có giọng tiếng Việt (Cài đặt → Trợ năng → Nội dung được đọc → Giọng nói); nhận giọng nói có thể không ổn định, trẻ vẫn gõ hoặc bấm chọn được.
 - Nhận giọng nói của Chrome cần kết nối Internet.
+
+## Giọng đọc
+
+- Mọi câu trong kịch bản đã có file mp3 đọc sẵn trong `audio/` (Ông: giọng Nam Minh, Bà: giọng Hoài My – Microsoft Neural).
+  `audio-manifest.js` liệt kê các câu đã có file.
+- Câu nào chưa có file (ví dụ câu mới thêm, hoặc câu trả lời của AI) sẽ đọc bằng giọng của trình duyệt.
+  Nên mở trang bằng **Microsoft Edge** để có giọng trình duyệt tự nhiên nhất.
+- Sau khi thêm bài trong `data.js`, tạo file cho câu mới:
+
+```bash
+pip install edge-tts
+npm i -D playwright && npx playwright install chromium
+node tools/list-speech.js > speech.json
+python3 tools/gen-audio-edge.py speech.json
+```
+
+  (Hoặc dùng FPT.AI: `FPT_API_KEY=... node tools/gen-audio.js`.)
