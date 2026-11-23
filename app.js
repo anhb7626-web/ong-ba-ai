@@ -30,7 +30,7 @@
   };
 
   const settings = Object.assign(
-    { autoread: true, rate: 0.9, ai: false, endpoint: "", music: true, sfx: true, fx: true, name: "" },
+    { autoread: true, rate: 0.9, ai: !!CFG.aiEndpoint, endpoint: "", music: true, sfx: true, fx: true, name: "" },
     store.get("settings", {})
   );
   const saveSettings = () => store.set("settings", settings);

@@ -6,5 +6,5 @@
  * KHÔNG dán API key vào đây: key nằm trong Cloudflare, xem README.md.
  */
 window.OBK_CONFIG = {
-  aiEndpoint: ""
+  aiEndpoint: "https://ong-ba-ai.anhb7626.workers.dev"
 };
