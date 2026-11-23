@@ -382,10 +382,17 @@
     $$("[data-icon]").forEach((el) => { if (!el.innerHTML) el.innerHTML = window.OBK_ART.icon(el.dataset.icon); });
     $$("[data-sticker]").forEach((el) => { if (!el.innerHTML) el.innerHTML = window.OBK_ART.sticker(el.dataset.sticker); });
   }
+  /* Mỗi chỗ vẽ một bản SVG có id riêng: nếu hai bản trùng id mà bản đầu đang ẩn
+     (ở màn khác), Chrome không tô được hoa văn (nền giấy điệp, áo hoa) ở bản sau. */
+  let svgSeq = 0;
+  function uniqueIds(svg) {
+    const n = ++svgSeq;
+    return svg.replace(/id="([^"]+)"/g, `id="$1-${n}"`).replace(/url\(#([^)]+)\)/g, `url(#$1-${n})`);
+  }
   function renderSvgSlots() {
     $$("[data-svg]").forEach((el) => {
       const which = el.dataset.svg === "current" ? (state.char || "ong") : el.dataset.svg;
-      if (el.dataset.drawn !== which) { el.innerHTML = window.OBK_SVG[which]; el.dataset.drawn = which; }
+      if (el.dataset.drawn !== which) { el.innerHTML = uniqueIds(window.OBK_SVG[which]); el.dataset.drawn = which; }
     });
   }
 
