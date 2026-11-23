@@ -235,16 +235,11 @@
     if (synth) synth.cancel();
     player.pause();
     const persona = state.char === "ba" ? "ba" : "ong";
-    // gom các đoạn chưa có file liền nhau thành một lần đọc Vbee, xin trước cho cả câu
-    const plan = [];
-    let run = [];
-    const flush = () => { if (run.length) { const segs = run; plan.push({ segs, url: ttsUrl(persona, segs.join(" ")) }); run = []; } };
-    for (const seg of segments(text)) {
+    // đoạn chưa có file: xin trạm đọc từng câu cùng lúc, câu đầu xong là ông bà nói ngay
+    const plan = segments(text).map((seg) => {
       const key = hashKey(persona, seg);
-      if (audioSet[persona].has(key)) { flush(); plan.push({ file: `audio/${persona}/${key}.mp3` }); }
-      else run.push(seg);
-    }
-    flush();
+      return audioSet[persona].has(key) ? { file: `audio/${persona}/${key}.mp3` } : { segs: [seg], url: ttsUrl(persona, seg) };
+    });
     SND.duck(true);
     for (const it of plan) {
       if (token !== speakToken) return;
