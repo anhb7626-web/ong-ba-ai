@@ -62,7 +62,7 @@
   const ponder = `
     <g class="ponder">
       <path d="M136 14 h40 a8 8 0 0 1 8 8 v18 a8 8 0 0 1 -8 8 h-26 l-8 8 v-8 h-6 a8 8 0 0 1 -8 -8 v-18 a8 8 0 0 1 8 -8z" fill="#fffaf0" stroke="${INK}" stroke-width="2.5"/>
-      <text x="156" y="38" text-anchor="middle" font-family="Baloo 2, sans-serif" font-weight="800" font-size="17" fill="#b3261e">à…</text>
+      <text x="156" y="38" text-anchor="middle" font-family="Nunito, sans-serif" font-weight="900" font-size="17" fill="#b3261e">à…</text>
     </g>`;
   const earHand = (sleeve) => `
       <g class="ear-hand">
