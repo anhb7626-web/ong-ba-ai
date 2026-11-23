@@ -342,6 +342,7 @@ body.bedtime .story-pic { filter: brightness(.82) saturate(.85); }
 }
 .round-btn.mic { background: var(--son); }
 .round-btn.mic.on { animation: pulse 1s infinite; }
+.round-btn.mic.busy { opacity: .6; animation: pulse 1.6s infinite; }
 @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(194,59,34,.55); } 100% { box-shadow: 0 0 0 18px rgba(194,59,34,0); } }
 .round-btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
 .btn {

@@ -65,6 +65,22 @@
       .replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
   }
   const words = (s) => norm(s).split(" ").filter(Boolean);
+  /* Gần đúng: cùng chữ khi bỏ dấu, hoặc lệch đúng 1 chữ cái với âm tiết từ 3 chữ cái trở lên
+     (ví dụ "nguoi"/"ngoi", "chung"/"chun") – để cháu nói hơi ngọng hay máy nghe nhầm chút vẫn được tính */
+  function lev1(a, b) {
+    if (a === b) return true;
+    const la = a.length, lb = b.length;
+    if (Math.abs(la - lb) > 1) return false;
+    let i = 0, j = 0, diff = 0;
+    while (i < la && j < lb) {
+      if (a[i] === b[j]) { i++; j++; continue; }
+      if (++diff > 1) return false;
+      if (la > lb) i++; else if (lb > la) j++; else { i++; j++; }
+    }
+    return diff + (la - i) + (lb - j) <= 1;
+  }
+  const nearWord = (a, b) => a === b || (a.length >= 3 && b.length >= 3 && lev1(a, b));
+  const hasNear = (list, w) => list.some((x) => nearWord(x, w));
   const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
@@ -208,10 +224,22 @@
   function stopSpeak() { speakToken++; if (synth) synth.cancel(); player.pause(); setTalking(false); SND.duck(false); }
 
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  let rec = null;
+  /* Nghe giọng cháu. Cách chính: ghi âm ngắn rồi gửi trạm AI (Qwen ASR, dùng được cả ở Trung Quốc).
+     Dự phòng: nhận giọng của Chrome (Web Speech) khi không có trạm, trình duyệt không ghi âm được,
+     hoặc trạm vừa lỗi. Ghi âm chỉ gửi đi để đổi ra chữ, không lưu lại. */
+  const REC_MIME = window.MediaRecorder && ["audio/webm;codecs=opus", "audio/ogg;codecs=opus", "audio/mp4", "audio/webm"]
+    .find((t) => { try { return MediaRecorder.isTypeSupported(t); } catch (e) { return false; } });
+  const canRecord = () => !!(REC_MIME !== undefined && navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+  const hasListen = () => !!SR || (canRecord() && !!endpoint());
+  let rec = null;          // Web Speech đang nghe
+  let take = null;         // ghi âm đang chạy
+  let asrDown = 0;         // lần cuối trạm nhận giọng lỗi, để tạm dùng Chrome
   function listen(onResult, onState) {
-    if (!SR) return;
+    if (take) { take.stop(); return; }
     if (rec) { try { rec.stop(); } catch (e) {} rec = null; onState(false); return; }
+    const useAsr = canRecord() && !!endpoint() && (!SR || Date.now() - asrDown > 120000);
+    if (useAsr) return listenAsr(onResult, onState);
+    if (!SR) return;
     stopSpeak();
     rec = new SR();
     rec.lang = "vi-VN";
@@ -229,6 +257,92 @@
     };
     rec.onend = () => { rec = null; onState(false); };
     try { rec.start(); onState(true); } catch (e) { rec = null; onState(false); }
+  }
+
+  async function listenAsr(onResult, onState) {
+    stopSpeak();
+    const me = { stop: () => {} };
+    take = me;
+    let stream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+    } catch (e) {
+      take = null;
+      onState(false, e && e.name === "NotAllowedError" ? "Cháu cần cho phép dùng micro nhé." : "Micro chưa dùng được, cháu gõ chữ hoặc bấm chọn nhé.");
+      return;
+    }
+    if (take !== me) { stream.getTracks().forEach((t) => t.stop()); return; }
+    const opts = { audioBitsPerSecond: 32000 };
+    if (REC_MIME) opts.mimeType = REC_MIME;
+    let mr;
+    try { mr = new MediaRecorder(stream, opts); } catch (e) { mr = new MediaRecorder(stream); }
+    const chunks = [];
+    let spoke = false, ac = null, timer = null;
+    mr.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
+    const finish = () => {
+      clearInterval(timer);
+      if (ac) ac.close().catch(() => {});
+      stream.getTracks().forEach((t) => t.stop());
+      SND.duck(false);
+    };
+    me.stop = () => { if (mr.state !== "inactive") mr.stop(); };
+    mr.onstop = async () => {
+      finish();
+      if (!spoke && ac) { take = null; onState(false, "Ông bà chưa nghe thấy gì, cháu nói lại nhé."); return; }
+      onState(false, null, (state.char === "ba" ? "Bà" : "Ông") + " đang nghe lại…");
+      try {
+        const blob = new Blob(chunks, { type: mr.mimeType || REC_MIME || "audio/webm" });
+        const audio = await new Promise((ok, bad) => {
+          const fr = new FileReader();
+          fr.onload = () => ok(String(fr.result).split(",")[1] || "");
+          fr.onerror = bad;
+          fr.readAsDataURL(blob);
+        });
+        const ctl = new AbortController();
+        const to = setTimeout(() => ctl.abort(), 15000);
+        const r = await fetch(endpoint() + "/asr", {
+          method: "POST", headers: { "Content-Type": "application/json" }, signal: ctl.signal,
+          body: JSON.stringify({ audio, mime: blob.type })
+        });
+        clearTimeout(to);
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(j.error || r.status);
+        take = null;
+        const text = String(j.text || "").trim();
+        if (!text) { onState(false, "Ông bà chưa nghe rõ, cháu nói to hơn một chút nhé."); return; }
+        onState(false);
+        onResult([text]);
+      } catch (e) {
+        take = null;
+        asrDown = Date.now();
+        onState(false, SR ? "Ông bà chưa nghe được, cháu bấm micro nói lại nhé." : "Không kết nối được dịch vụ nhận giọng nói. Cháu gõ chữ nhé.");
+      }
+    };
+    // tự dừng khi cháu nói xong (im 1,3 giây), hoặc 6 giây chưa nói gì, tối đa 12 giây
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      ac = new AC();
+      const an = ac.createAnalyser();
+      an.fftSize = 1024;
+      ac.createMediaStreamSource(stream).connect(an);
+      const buf = new Uint8Array(an.fftSize);
+      const t0 = Date.now();
+      let lastLoud = t0;
+      timer = setInterval(() => {
+        an.getByteTimeDomainData(buf);
+        let sum = 0;
+        for (let i = 0; i < buf.length; i++) { const v = (buf[i] - 128) / 128; sum += v * v; }
+        const now = Date.now();
+        if (Math.sqrt(sum / buf.length) > 0.04) { spoke = true; lastLoud = now; }
+        if ((spoke && now - lastLoud > 1300) || (!spoke && now - t0 > 6000) || now - t0 > 12000) me.stop();
+      }, 100);
+    } catch (e) {
+      ac = null;
+      timer = setTimeout(() => me.stop(), 8000);
+    }
+    SND.duck(true);
+    mr.start();
+    onState(true);
   }
 
   /* ===================== Màn hình ===================== */
@@ -625,9 +739,11 @@
         const k = wkey(w);
         if (exact.has(k)) return { w, st: "ok" };
         if (plain.has(norm(k))) return { w, st: checkTone ? "tone" : "ok" };
+        if (hasNear([...plain], norm(k))) return { w, st: "near" };
         return { w, st: "miss" };
       });
-      const sc = res.filter((r) => r.st !== "miss").length + res.filter((r) => r.st === "ok").length / 10;
+      const sc = res.filter((r) => r.st !== "miss").length - res.filter((r) => r.st === "near").length / 4 +
+        res.filter((r) => r.st === "ok").length / 10;
       if (!best || sc > best.sc) best = { res, sc };
     });
     const res = best.res;
@@ -637,8 +753,10 @@
   function showToneCheck(kidEl, check) {
     const box = document.createElement("div");
     box.className = "tone-check";
-    box.innerHTML = check.res.map((r) => `<span class="tw ${r.st}">${esc(r.w)}</span>`).join(" ") +
-      (check.tones.length ? '<span class="tone-note">Chữ màu cam: cháu nói gần đúng, nhớ chú ý dấu nhé.</span>' : "");
+    const near = check.res.some((r) => r.st === "near");
+    box.innerHTML = check.res.map((r) => `<span class="tw ${r.st === "near" ? "tone" : r.st}">${esc(r.w)}</span>`).join(" ") +
+      (check.tones.length || near ? '<span class="tone-note">Chữ màu cam: cháu nói gần đúng rồi, ' +
+        (check.tones.length ? "nhớ chú ý dấu nhé." : "nói rõ thêm một chút nhé.") + "</span>" : "");
     kidEl.appendChild(box);
     scrollDown();
   }
@@ -671,7 +789,7 @@
         panel("");
         await wait(300);
         setMood("happy", 2000); SND.sfx("correct");
-        gpSay(check.hit >= 0.6 ? pick(READ_OK) : pick(READ_DONE), { cls: "praise" });
+        gpSay(check.hit >= READ_PASS ? pick(READ_OK) : pick(READ_DONE), { cls: "praise" });
         showContinue();
       }
     });
@@ -698,7 +816,7 @@
   }
 
   function answerBox({ choices, placeholder, onAnswer, extraButtons, suggest, header }) {
-    const hasMic = !!SR;
+    const hasMic = hasListen();
     let html = header || "";
     if (suggest && suggest.length) html += `<div class="suggest">${suggest.map((s, i) => `<button data-s="${i}">${esc(s)}</button>`).join("")}</div>`;
     if (choices && choices.length) html += `<div class="choices">${choices.map((c, i) => `<button class="choice" data-i="${i}">${esc(fill(c))}</button>`).join("")}</div>`;
@@ -725,10 +843,11 @@
     const mic = $("#btn-mic", p);
     if (mic) mic.onclick = () => listen(
       (alts) => submit(alts[0], alts, null, "voice"),
-      (on, err) => {
+      (on, err, note) => {
         mic.classList.toggle("on", on);
-        setMood(on ? "listen" : null);
-        $("#listen-note").textContent = on ? (state.char === "ba" ? "Bà" : "Ông") + " đang nghe cháu nói…" : (err || "");
+        mic.classList.toggle("busy", !!note);
+        setMood(on || note ? "listen" : null);
+        $("#listen-note").textContent = on ? (state.char === "ba" ? "Bà" : "Ông") + " đang nghe cháu nói…" : (note || err || "");
       }
     );
     return p;
@@ -739,14 +858,22 @@
     const iw = words(input), cw = words(fill(choice));
     if (!iw.length || !cw.length) return 0;
     const inSet = new Set(iw);
-    const hit = cw.filter((w) => inSet.has(w)).length;
+    // trùng hẳn (bỏ dấu) được 1 điểm, gần đúng được 0,75 để vẫn ưu tiên đáp án khớp hơn
+    const hit = cw.reduce((n, w) => n + (inSet.has(w) ? 1 : hasNear(iw, w) ? 0.75 : 0), 0);
     return hit / cw.length;
+  }
+  // cụm từ chấp nhận có trong câu cháu nói không (từng âm tiết liền nhau, cho phép gần đúng)
+  function phraseNear(aw, kw) {
+    if (!kw.length) return false;
+    for (let i = 0; i + kw.length <= aw.length; i++)
+      if (kw.every((w, j) => nearWord(aw[i + j], w))) return true;
+    return false;
   }
   function judge(step, alts, idx) {
     if (idx != null) return idx === step.answer;
     for (const a of alts) {
-      const n = " " + norm(a) + " ";
-      if ((step.accept || []).some((k) => n.includes(" " + norm(k) + " "))) return true;
+      const aw = words(a);
+      if ((step.accept || []).some((k) => phraseNear(aw, words(k)))) return true;
       const scores = step.choices.map((c) => scoreChoice(a, c));
       const best = Math.max(...scores);
       if (best > 0 && scores[step.answer] === best && scores.filter((x) => x === best).length === 1) return true;
@@ -764,6 +891,7 @@
   ];
   const REPLY_OPEN = ["Ồ, thế à!", "Hay quá!", "À, {X} hiểu rồi."];
   const READ_DONE = ["Cháu đọc hay quá!", "Giỏi lắm, đọc to rõ ràng!", "Hay lắm cháu ơi!"];
+  const READ_PASS = 0.5; // đọc được nửa câu trở lên (tính cả chữ gần đúng) là khen "đúng rồi"
   const READ_OK = ["Cháu đọc đúng rồi! Hay quá!", "Giỏi quá, đọc chuẩn lắm!"];
 
   function confetti() {
@@ -871,9 +999,9 @@
       panel("");
       await wait(300);
       if (!txt) { gpSay(pick(READ_DONE), { cls: "praise" }); showContinue(); return; }
-      if (best >= 0.6 || s.tries >= 1) {
+      if (best >= READ_PASS || s.tries >= 1) {
         confetti();
-        gpSay((best >= 0.6 ? pick(READ_OK) : "Cháu cố gắng lắm! Mình cùng đọc lại một lần nữa nhé: " + step.text), { cls: "praise" });
+        gpSay((best >= READ_PASS ? pick(READ_OK) : "Cháu cố gắng lắm! Mình cùng đọc lại một lần nữa nhé: " + step.text), { cls: "praise" });
         showContinue();
       } else {
         s.tries++;
@@ -1145,8 +1273,9 @@
     $("#set-fx").checked = settings.fx;
     $("#set-endpoint").value = settings.endpoint || CFG.aiEndpoint || "";
     renderVoiceStatus();
-    $("#mic-status").textContent = SR
-      ? "✅ Trình duyệt này nhận được giọng nói tiếng Việt. Bấm nút micro đỏ khi trả lời."
+    $("#mic-status").textContent = canRecord() && endpoint()
+      ? "✅ Ông bà nghe giọng cháu qua trạm AI (dùng được cả ở Trung Quốc)" + (SR ? ", nếu trạm lỗi thì dùng nhận giọng của trình duyệt." : ".") + " Bấm nút micro đỏ khi trả lời."
+      : SR ? "✅ Trình duyệt này nhận được giọng nói tiếng Việt. Bấm nút micro đỏ khi trả lời."
       : "⚠️ Trình duyệt này chưa nhận giọng nói. Hãy dùng Chrome trên máy tính hoặc Android. Cháu vẫn gõ chữ hoặc bấm chọn được.";
     $("#ai-status").textContent = endpoint()
       ? (settings.ai ? "AI đang bật." : "AI đang tắt.")
