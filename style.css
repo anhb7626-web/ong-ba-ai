@@ -854,3 +854,23 @@ body {
 .stat-label { font-weight: 700; opacity: .85; }
 .card h3 { font-size: 1.15rem; line-height: 1.3; }
 .card { border-width: 2px; }
+
+/* ---------- Triện mềm hơn: đóng son lên giấy, mép nhòe, nghiêng mỗi tờ một kiểu ---------- */
+.seal {
+  top: auto; bottom: 12px; right: 12px;
+  min-width: 34px; height: 34px; padding: 0 5px;
+  font-size: .82rem; color: var(--card); letter-spacing: .01em;
+  background: var(--son);
+  border-radius: 7px 4px 8px 5px / 5px 8px 4px 7px;
+  box-shadow: inset 0 0 0 2px var(--son), inset 0 0 0 3.5px rgba(253,246,227,.85);
+  filter: url(#stamp); opacity: .93;
+  transform: rotate(var(--tilt, -6deg));
+}
+.m-story .seal { color: var(--card); background: var(--son); box-shadow: inset 0 0 0 2px var(--son), inset 0 0 0 3.5px rgba(253,246,227,.85); }
+.m-chat .seal  { --tilt: 5deg; }
+.m-rhyme .seal { --tilt: -3deg; }
+.m-quiz .seal  { --tilt: 7deg; }
+.m-bed .seal   { --tilt: -8deg; top: auto; bottom: 12px; }
+.mode-card .mode-sub { margin-right: 46px; }
+.brand-mark { border-radius: 7px 4px 8px 5px / 5px 8px 4px 7px; filter: url(#stamp); outline: 0;
+  box-shadow: inset 0 0 0 2px var(--son), inset 0 0 0 3.5px rgba(253,246,227,.85); }
