@@ -10,6 +10,6 @@ ALLOWED_ORIGINS = "https://anhb7626-web.github.io,http://localhost:8000"
 MODEL = "qwen-plus"
 # Tài khoản Aliyun Bách Luyện (Trung Quốc). Nếu dùng bản quốc tế, đổi thành:
 # https://dashscope-intl.aliyuncs.com/compatible-mode/v1
-DASHSCOPE_BASE = "https://dashscope.aliyuncs.com/compatible-mode/v1"
+DASHSCOPE_BASE = "https://dashscope-intl.aliyuncs.com/compatible-mode/v1"
 # API key KHÔNG để ở đây: thêm trên Cloudflare → Settings → Variables and Secrets,
 # tên DASHSCOPE_API_KEY, loại Secret.
