@@ -11,8 +11,19 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
 </head>
 <body>
+  <div id="splash" aria-hidden="true">
+    <div class="curtain l"></div><div class="curtain r"></div>
+    <div class="splash-inner">
+      <div class="splash-lantern"></div>
+      <div class="splash-title">Ông Bà Kể</div>
+      <div class="splash-sub">Chạm để mở rèm</div>
+    </div>
+  </div>
   <div id="petals" aria-hidden="true"></div>
   <header class="topbar">
     <button class="icon-btn" id="btn-back" aria-label="Quay lại" hidden>
@@ -42,6 +53,10 @@
           <p class="hero-sub">Nghe ông bà kể chuyện, tập nói tiếng Việt</p>
         </div>
       </div>
+      <label class="name-field" for="kid-name">
+        <span>Cháu tên là gì?</span>
+        <input id="kid-name" type="text" placeholder="Ví dụ: Minh" maxlength="20" autocomplete="off" lang="vi">
+      </label>
       <p class="lead">Cháu muốn trò chuyện với ai nào?</p>
       <div class="char-pick">
         <button class="char-card scroll" data-char="ong">
@@ -71,7 +86,10 @@
         <button class="mode-card m-rhyme" data-mode="rhymes"><span class="mode-icon" data-icon="rhymes"></span><span class="mode-name">Đồng dao, ca dao</span><span class="mode-sub">Nghe, đọc theo, hiểu nghĩa</span></button>
         <button class="mode-card m-quiz" data-mode="quiz"><span class="mode-icon" data-icon="quiz"></span><span class="mode-name">Đố vui văn hóa</span><span class="mode-sub">Tết, áo dài, món ăn</span></button>
       </div>
-      <button class="link-btn" id="btn-switch-char">Đổi nhân vật</button>
+      <div class="mode-foot">
+        <button class="sticker-btn" id="btn-stickers"><span class="sticker-btn-art" data-sticker="ga"></span><span>Sổ nhãn dán <b id="sticker-count">0/8</b></span></button>
+        <button class="link-btn" id="btn-switch-char">Đổi nhân vật</button>
+      </div>
     </section>
 
     <!-- 3. Danh sách bài -->
@@ -93,26 +111,42 @@
       <div class="input-panel" id="input-panel"></div>
     </section>
 
+    <!-- Sổ nhãn dán -->
+    <section class="screen" id="screen-stickers" hidden>
+      <h2 class="screen-title">Sổ nhãn dán</h2>
+      <p class="muted" id="sticker-progress"></p>
+      <div class="sticker-grid" id="sticker-grid"></div>
+    </section>
+
     <!-- 5. Góc phụ huynh -->
     <section class="screen" id="screen-parent" hidden>
       <h2 class="screen-title">Góc phụ huynh</h2>
+      <p class="muted parent-sub" id="parent-sub">Tiến bộ của con</p>
       <div class="stats">
         <div class="stat"><span class="stat-num" id="st-today">0</span><span class="stat-label">phút hôm nay</span></div>
         <div class="stat"><span class="stat-num" id="st-total">0</span><span class="stat-label">phút tất cả</span></div>
         <div class="stat"><span class="stat-num" id="st-lessons">0</span><span class="stat-label">bài đã học</span></div>
+        <div class="stat"><span class="stat-num" id="st-said">0</span><span class="stat-label">câu con tự nói</span></div>
+        <div class="stat"><span class="stat-num" id="st-uptake">0</span><span class="stat-label">lần nói lại câu đúng</span></div>
+        <div class="stat"><span class="stat-num" id="st-stickers">0</span><span class="stat-label">nhãn dán</span></div>
       </div>
       <div class="card">
-        <h3>🍲 Gợi ý hỏi con trong bữa cơm</h3>
+        <h3>Gợi ý hỏi con trong bữa cơm</h3>
         <p class="muted" id="tips-from"></p>
         <ol class="tips" id="tips"></ol>
       </div>
       <div class="card">
-        <h3>🌱 Từ mới con đã gặp <span class="muted" id="words-count"></span></h3>
-        <p class="muted">Từ có ⭐ là từ con đã bấm “Xem nghĩa”. Bấm vào từ để xem nghĩa.</p>
+        <h3>Từ mới con đã gặp <span class="muted" id="words-count"></span></h3>
+        <p class="muted">Từ có dấu sao là từ con đã bấm “Xem nghĩa”. Bấm vào từ để xem nghĩa.</p>
         <div class="word-chips" id="word-chips"></div>
       </div>
       <div class="card">
-        <h3>📅 Bài học gần đây</h3>
+        <h3>Chữ con hay nói sai dấu</h3>
+        <p class="muted">Đếm từ những lần con nói to hoặc đọc theo. Bố mẹ có thể đọc chậm những chữ này cho con nghe lại.</p>
+        <div class="word-chips" id="tone-list"></div>
+      </div>
+      <div class="card">
+        <h3>Bài học gần đây</h3>
         <ul class="recent" id="recent"></ul>
       </div>
       <p class="muted small">Dữ liệu chỉ lưu trên máy này (localStorage), không gửi đi đâu.</p>
@@ -123,7 +157,7 @@
     <section class="screen" id="screen-settings" hidden>
       <h2 class="screen-title">Cài đặt</h2>
       <div class="card">
-        <h3>🔊 Giọng đọc</h3>
+        <h3>Giọng đọc</h3>
         <label class="row"><input type="checkbox" id="set-autoread"> Tự động đọc to câu của ông bà</label>
         <label class="row col">Tốc độ đọc: <span id="rate-label"></span>
           <input type="range" id="set-rate" min="0.6" max="1.2" step="0.05">
@@ -132,17 +166,17 @@
         <button class="btn" id="btn-test-voice">Nghe thử</button>
       </div>
       <div class="card">
-        <h3>🎵 Nhạc và hiệu ứng</h3>
+        <h3>Nhạc và hiệu ứng</h3>
         <label class="row"><input type="checkbox" id="set-music"> Nhạc nền đàn tranh</label>
         <label class="row"><input type="checkbox" id="set-sfx"> Tiếng động khi bấm, khi trả lời</label>
         <label class="row"><input type="checkbox" id="set-fx"> Cảnh nền chuyển động, hoa rơi</label>
       </div>
       <div class="card">
-        <h3>🎤 Nói để trả lời</h3>
+        <h3>Nói để trả lời</h3>
         <p class="muted" id="mic-status"></p>
       </div>
       <div class="card">
-        <h3>🤖 AI thật</h3>
+        <h3>AI thật</h3>
         <p class="muted">Mặc định, ông bà nói theo kịch bản soạn sẵn. Khi bật AI thật, mục “Trò chuyện tự do” sẽ dùng AI (Qwen) qua trạm trung chuyển của trang. API key không nằm trên trang này.</p>
         <label class="row"><input type="checkbox" id="set-ai"> Bật trò chuyện tự do với AI</label>
         <label class="row col">Địa chỉ trạm AI
@@ -153,6 +187,16 @@
       </div>
     </section>
   </main>
+
+  <div class="reward" id="reward" hidden role="dialog" aria-modal="true" aria-labelledby="reward-title">
+    <div class="reward-card">
+      <div class="reward-rays" aria-hidden="true"></div>
+      <div class="reward-art" id="reward-art"></div>
+      <h3 id="reward-title">Giỏi lắm cháu ơi!</h3>
+      <p>Cháu nhận được nhãn dán <b id="reward-name"></b></p>
+      <button class="btn btn-big" id="reward-ok">Cất vào sổ</button>
+    </div>
+  </div>
 
   <div class="sheet" id="sheet" hidden>
     <div class="sheet-inner">

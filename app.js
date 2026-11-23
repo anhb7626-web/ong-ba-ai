@@ -4,6 +4,18 @@
 
   const D = window.OBK_DATA;
   const SND = window.OBK_SOUND;
+  const ic = (d, fill) => `<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">${fill ? d : `<g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">${d}</g>`}</svg>`;
+  const IC = {
+    speaker: ic('<path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16 9q2 3 0 6M19 6.5q4 5.5 0 11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>', true),
+    book: ic('<path d="M3 5q4-2 9 1q5-3 9-1v14q-4-2-9 1q-5-3-9-1z"/><path d="M12 6v14"/>'),
+    mic: ic('<rect x="8.5" y="3" width="7" height="12" rx="3.5" fill="currentColor"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>', true),
+    send: ic('<path d="M4 12h14M12 5l7 7-7 7"/>'),
+    check: ic('<path d="M5 12.5l4.5 4.5L19 7"/>'),
+    again: ic('<path d="M4 12a8 8 0 1 0 2.6-5.9"/><path d="M4 4v4.5h4.5"/>'),
+    grid: ic('<rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/>'),
+    family: ic('<circle cx="8" cy="7" r="3"/><circle cx="17" cy="9" r="2.4"/><path d="M2.5 20c0-4 2.5-7 5.5-7s5.5 3 5.5 7M13 20c.3-3 2-5 4-5s3.8 2 4 5"/>'),
+    skip: ic('<path d="M5 6l7 6-7 6M13 6l7 6-7 6"/>')
+  };
   const CFG = window.OBK_CONFIG || {};
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
@@ -18,13 +30,13 @@
   };
 
   const settings = Object.assign(
-    { autoread: true, rate: 0.9, ai: false, endpoint: "", music: true, sfx: true, fx: true },
+    { autoread: true, rate: 0.9, ai: false, endpoint: "", music: true, sfx: true, fx: true, name: "" },
     store.get("settings", {})
   );
   const saveSettings = () => store.set("settings", settings);
 
   function stats() {
-    return Object.assign({ seconds: 0, days: {}, words: {}, lessons: [] }, store.get("stats", {}));
+    return Object.assign({ seconds: 0, days: {}, words: {}, lessons: [], said: 0, uptake: 0, toneMiss: {}, stickers: [] }, store.get("stats", {}));
   }
   function saveStats(s) { store.set("stats", s); }
   const today = () => new Date().toISOString().slice(0, 10);
@@ -221,6 +233,7 @@
   function renderArt() {
     const h = $("#hero-art"); if (h && !h.innerHTML) h.innerHTML = window.OBK_ART.hero;
     $$("[data-icon]").forEach((el) => { if (!el.innerHTML) el.innerHTML = window.OBK_ART.icon(el.dataset.icon); });
+    $$("[data-sticker]").forEach((el) => { if (!el.innerHTML) el.innerHTML = window.OBK_ART.sticker(el.dataset.sticker); });
   }
   function renderSvgSlots() {
     $$("[data-svg]").forEach((el) => {
@@ -238,6 +251,8 @@
     renderSvgSlots();
     window.scrollTo(0, 0);
     if (screen === "parent") renderParent();
+    if (screen === "stickers") renderStickers();
+    if (screen === "modes") setGreeting();
     if (screen === "settings") renderSettings();
   }
   function back() {
@@ -247,14 +262,22 @@
     show(prev, false);
   }
 
+  function setGreeting() {
+    const x = state.char === "ba" ? "Bà" : "Ông";
+    const n = (settings.name || "").trim();
+    $("#greet-text").textContent = n
+      ? `${x} đây! ${n} ơi, hôm nay cháu muốn làm gì với ${x.toLowerCase()} nào?`
+      : `${x} đây! Hôm nay cháu muốn làm gì với ${x.toLowerCase()} nào?`;
+    $("#sticker-count").textContent = `${stats().stickers.length}/${window.OBK_ART.stickers.length}`;
+  }
   function chooseChar(c) {
     state.char = c; store.set("char", c);
     loadVoices();
     renderSvgSlots();
     const x = c === "ba" ? "Bà" : "Ông";
-    $("#greet-text").textContent = `${x} đây! Hôm nay cháu muốn làm gì với ${x.toLowerCase()} nào?`;
+    setGreeting();
     show("modes");
-    speak($("#greet-text").textContent);
+    speak(`${x} đây! Hôm nay cháu muốn làm gì với ${x.toLowerCase()} nào?`);
   }
 
   const MODE_NAMES = { stories: "📖 Kể chuyện cổ tích", chats: "🍚 Trò chuyện hằng ngày", rhymes: "🎶 Đồng dao – ca dao" };
@@ -334,8 +357,10 @@
       seen: new Set()
     };
     $("#session-title").textContent = s.title;
-    $("#log").innerHTML = "";
+    const scene = window.OBK_ART.scene(item && item.id, mode);
+    $("#log").innerHTML = scene ? `<div class="scene" aria-hidden="true">${scene}</div>` : "";
     $("#progress-bar").style.width = "0%";
+    SND.style(mode === "quiz" || mode === "rhymes" ? "lively" : "calm");
     show("session");
     // đếm thời gian luyện
     clearInterval(tick);
@@ -347,6 +372,7 @@
   }
   function endSession() {
     clearInterval(tick); tick = null;
+    SND.style("calm");
     stopSpeak();
     if (rec) { try { rec.stop(); } catch (e) {} }
     state.session = null;
@@ -395,12 +421,12 @@
     const tools = $(".msg-tools", wrap);
     const say = opts.lines ? opts.lines.map(fill).join(". ") : t;
     const bSpeak = document.createElement("button");
-    bSpeak.className = "tool"; bSpeak.textContent = "🔊 Nghe lại";
+    bSpeak.className = "tool"; bSpeak.innerHTML = IC.speaker + "Nghe lại";
     bSpeak.onclick = () => speak(say, true);
     tools.appendChild(bSpeak);
     if (found.length) {
       const bMean = document.createElement("button");
-      bMean.className = "tool"; bMean.textContent = "📘 Xem nghĩa";
+      bMean.className = "tool"; bMean.innerHTML = IC.book + "Xem nghĩa";
       bMean.onclick = () => toggleMeanings(wrap, found, bMean);
       tools.appendChild(bMean);
       addWordsSeen(found, false);
@@ -413,7 +439,7 @@
 
   function toggleMeanings(wrap, found, btn) {
     const old = $(".meanings", wrap);
-    if (old) { old.remove(); btn.textContent = "📘 Xem nghĩa"; return; }
+    if (old) { old.remove(); btn.innerHTML = IC.book + "Xem nghĩa"; return; }
     const box = document.createElement("div");
     box.className = "meanings";
     found.forEach((w) => {
@@ -424,7 +450,7 @@
       box.appendChild(d);
     });
     wrap.appendChild(box);
-    btn.textContent = "📘 Ẩn nghĩa";
+    btn.innerHTML = IC.book + "Ẩn nghĩa";
     addWordsSeen(found, true);
     scrollDown();
   }
@@ -437,7 +463,7 @@
       `<h3>${esc(g.word)}</h3><div class="lang">` +
       `<span>Tiếng Anh</span><span>${esc(g.en)}</span>` +
       `<span>Tiếng Trung</span><span>${esc(g.zh)} <em class="muted">${esc(g.py || "")}</em></span></div>` +
-      `<p><button class="btn btn-green" id="sheet-say">🔊 Nghe từ này</button></p>`;
+      `<p><button class="btn btn-green" id="sheet-say">${IC.speaker} Nghe từ này</button></p>`;
     $("#sheet").hidden = false;
     $("#sheet-say").onclick = () => speak(g.word, true);
   }
@@ -448,6 +474,76 @@
     d.innerHTML = `<div class="text">${esc(text)}</div>`;
     $("#log").appendChild(d);
     scrollDown();
+    return d;
+  }
+
+  /* So câu cháu nói/gõ với câu mẫu từng chữ: đúng, sai dấu, hay chưa nghe thấy */
+  const wkey = (w) => w.normalize("NFC").toLowerCase().replace(/[^\p{L}\p{N}]/gu, "");
+  const hasMarks = (t) => /[^\x00-\x7F]/.test(t);
+  function toneCheck(target, alts, src) {
+    const tw = fill(target).split(/\s+/).filter((w) => wkey(w));
+    // gõ không dấu thì không chấm dấu (do bàn phím, không phải do phát âm)
+    const checkTone = src === "voice" || alts.some(hasMarks);
+    let best = null;
+    alts.forEach((a) => {
+      const exact = new Set(a.split(/\s+/).map(wkey));
+      const plain = new Set([...exact].map(norm));
+      const res = tw.map((w) => {
+        const k = wkey(w);
+        if (exact.has(k)) return { w, st: "ok" };
+        if (plain.has(norm(k))) return { w, st: checkTone ? "tone" : "ok" };
+        return { w, st: "miss" };
+      });
+      const sc = res.filter((r) => r.st !== "miss").length + res.filter((r) => r.st === "ok").length / 10;
+      if (!best || sc > best.sc) best = { res, sc };
+    });
+    const res = best.res;
+    const hit = res.filter((r) => r.st !== "miss").length / Math.max(1, res.length);
+    return { res, hit, tones: res.filter((r) => r.st === "tone").map((r) => wkey(r.w)) };
+  }
+  function showToneCheck(kidEl, check) {
+    const box = document.createElement("div");
+    box.className = "tone-check";
+    box.innerHTML = check.res.map((r) => `<span class="tw ${r.st}">${esc(r.w)}</span>`).join(" ") +
+      (check.tones.length ? '<span class="tone-note">Chữ màu cam: cháu nói gần đúng, nhớ chú ý dấu nhé.</span>' : "");
+    kidEl.appendChild(box);
+    scrollDown();
+  }
+  function recordSaid(check, isUptake) {
+    const st = stats();
+    st.said++;
+    if (isUptake) st.uptake++;
+    (check ? check.tones : []).forEach((w) => (st.toneMiss[w] = (st.toneMiss[w] || 0) + 1));
+    saveStats(st);
+  }
+
+  /* Câu mẫu để cháu nói lại sau khi được nhắc (uptake) */
+  function modelOf(step) {
+    if (step.model) return fill(step.model);
+    const segs = segments(fill(step.recast)).filter((x) => !/:$/.test(x));
+    let m = (segs[0] || "").replace(/^(À|Ừ|Ồ|Đúng là),?\s*/u, "");
+    return m.charAt(0).toUpperCase() + m.slice(1);
+  }
+  function inviteRepeat(model) {
+    gpSay("Cháu nói lại câu đó cùng {X} nhé!");
+    answerBox({
+      header: `<div class="model-card"><span class="model-label">Cháu nói theo</span>${esc(model)}</div>`,
+      placeholder: "Hoặc gõ lại câu…",
+      extraButtons: `<div class="btn-row two"><button class="btn btn-green" id="btn-said">${IC.check} Cháu nói rồi</button><button class="btn btn-ghost" id="btn-skip">${IC.skip} Bỏ qua</button></div>`,
+      onAnswer: async (txt, alts, idx, src) => {
+        const el = kidSay(txt);
+        const check = toneCheck(model, alts, src);
+        showToneCheck(el, check);
+        recordSaid(check, true);
+        panel("");
+        await wait(300);
+        setMood("happy", 2000); SND.sfx("correct");
+        gpSay(check.hit >= 0.6 ? pick(READ_OK) : pick(READ_DONE), { cls: "praise" });
+        showContinue();
+      }
+    });
+    $("#btn-said").onclick = () => { stopSpeak(); recordSaid(null, true); panel(""); setMood("happy", 2000); SND.sfx("correct"); gpSay(pick(READ_DONE), { cls: "praise" }); showContinue(); };
+    $("#btn-skip").onclick = () => { stopSpeak(); next(); };
   }
 
   function typing() {
@@ -463,41 +559,41 @@
   /* ----- Ô trả lời ----- */
   function panel(html) { const p = $("#input-panel"); p.innerHTML = html; if (html) scrollDown(); return p; }
 
-  function showContinue(label = "Tiếp ▶") {
-    const p = panel(`<button class="btn btn-big" id="btn-next">${label}</button>`);
+  function showContinue(label = "Tiếp") {
+    const p = panel(`<button class="btn btn-big" id="btn-next">${label} ${IC.send}</button>`);
     $("#btn-next", p).onclick = () => { stopSpeak(); next(); };
   }
 
-  function answerBox({ choices, placeholder, onAnswer, extraButtons, suggest }) {
+  function answerBox({ choices, placeholder, onAnswer, extraButtons, suggest, header }) {
     const hasMic = !!SR;
-    let html = "";
+    let html = header || "";
     if (suggest && suggest.length) html += `<div class="suggest">${suggest.map((s, i) => `<button data-s="${i}">${esc(s)}</button>`).join("")}</div>`;
     if (choices && choices.length) html += `<div class="choices">${choices.map((c, i) => `<button class="choice" data-i="${i}">${esc(fill(c))}</button>`).join("")}</div>`;
     html += `<form class="answer-row" autocomplete="off">
         <input type="text" id="answer" placeholder="${esc(placeholder || "Cháu gõ câu trả lời…")}" enterkeyhint="send" lang="vi">
-        ${hasMic ? '<button type="button" class="round-btn mic" id="btn-mic" aria-label="Nói">🎤</button>' : ""}
-        <button type="submit" class="round-btn" aria-label="Gửi">➤</button>
+        ${hasMic ? '<button type="button" class="round-btn mic" id="btn-mic" aria-label="Nói">' + IC.mic + '</button>' : ""}
+        <button type="submit" class="round-btn" aria-label="Gửi">${IC.send}</button>
       </form>`;
     if (extraButtons) html += extraButtons;
     html += '<p class="listen-note" id="listen-note"></p>';
     const p = panel(html);
     let locked = false;
-    const submit = (txt, alts, idx) => {
+    const submit = (txt, alts, idx, src) => {
       if (locked || !String(txt).trim()) return;
       locked = true;
       stopSpeak();
-      onAnswer(String(txt).trim(), alts || [txt], idx);
+      onAnswer(String(txt).trim(), alts || [txt], idx, src || (idx != null ? "tap" : "typed"));
     };
     $$(".choice", p).forEach((b) => (b.onclick = () => submit(b.textContent, null, +b.dataset.i)));
     $$(".suggest button", p).forEach((b) => (b.onclick = () => { $("#answer").value = b.textContent; $("#answer").focus(); }));
     $("form", p).onsubmit = (e) => { e.preventDefault(); submit($("#answer").value); };
     const mic = $("#btn-mic", p);
     if (mic) mic.onclick = () => listen(
-      (alts) => submit(alts[0], alts),
+      (alts) => submit(alts[0], alts, null, "voice"),
       (on, err) => {
         mic.classList.toggle("on", on);
         setMood(on ? "listen" : null);
-        $("#listen-note").textContent = on ? "🎤 Ông bà đang nghe…".replace("Ông bà", state.char === "ba" ? "Bà" : "Ông") : (err || "");
+        $("#listen-note").textContent = on ? (state.char === "ba" ? "Bà" : "Ông") + " đang nghe cháu nói…" : (err || "");
       }
     );
     return p;
@@ -536,10 +632,10 @@
   const READ_OK = ["Cháu đọc đúng rồi! Hay quá!", "Giỏi quá, đọc chuẩn lắm!"];
 
   function confetti() {
-    const em = ["⭐", "🌸", "🏮", "✨", "🎉"];
-    for (let i = 0; i < 10; i++) {
+    if (document.body.classList.contains("no-fx")) return;
+    for (let i = 0; i < 14; i++) {
       const s = document.createElement("span");
-      s.className = "confetti"; s.textContent = pick(em);
+      s.className = "confetti c" + (i % 4);
       s.style.left = Math.random() * 90 + 5 + "vw";
       s.style.top = 60 + Math.random() * 80 + "px";
       s.style.animationDelay = Math.random() * 0.3 + "s";
@@ -562,7 +658,7 @@
       showContinue();
     } else if (step.t === "poem") {
       gpSay("", { lines: step.lines, cls: "poem" });
-      showContinue("Cháu nghe xong rồi ▶");
+      showContinue("Cháu nghe xong rồi");
     } else if (step.t === "repeat") {
       runRepeat(step);
     } else if (step.t === "ask") {
@@ -577,8 +673,9 @@
     answerBox({
       choices,
       placeholder: choices ? "Hoặc gõ chữ…" : "Cháu gõ chữ…",
-      onAnswer: async (txt, alts, idx) => {
+      onAnswer: async (txt, alts, idx, src) => {
         kidSay(txt);
+        if (src !== "tap") recordSaid(null, false);
         panel("");
         await wait(350);
         if (step.open) {
@@ -598,7 +695,10 @@
           // Recast: nhắc lại câu đúng một cách tự nhiên, rồi khen
           setMood("nod", 1400);
           SND.sfx("gentle");
-          gpSay(step.recast + " " + pick(ENCOURAGE), { cls: "praise" });
+          await gpSay(step.recast + " " + pick(ENCOURAGE), { cls: "praise" }).spoken;
+          if (state.session !== s) return;
+          inviteRepeat(modelOf(step));
+          return;
         }
         showContinue();
       }
@@ -608,23 +708,25 @@
   function runRepeat(step) {
     const s = state.session;
     gpSay("Cháu đọc theo nhé: " + step.text);
-    const doneBtn = '<div class="btn-row" style="margin-top:10px"><button class="btn btn-green" id="btn-read">✋ Cháu đọc to xong rồi</button></div>';
+    const doneBtn = '<div class="btn-row" style="margin-top:10px"><button class="btn btn-green" id="btn-read">' + IC.check + ' Cháu đọc to xong rồi</button></div>';
     answerBox({
       placeholder: "Gõ lại câu thơ…",
       extraButtons: doneBtn,
-      onAnswer: (txt, alts) => handle(txt, alts)
+      onAnswer: (txt, alts, idx, src) => handle(txt, alts, src)
     });
     $("#btn-read").onclick = () => { stopSpeak(); handle(null); };
-    async function handle(txt, alts) {
-      if (txt) kidSay(txt);
+    async function handle(txt, alts, src) {
+      let best = 0;
+      if (txt) {
+        const el = kidSay(txt);
+        const check = toneCheck(step.text, alts, src);
+        showToneCheck(el, check);
+        recordSaid(check, false);
+        best = check.hit;
+      } else recordSaid(null, false);
       panel("");
       await wait(300);
       if (!txt) { gpSay(pick(READ_DONE), { cls: "praise" }); showContinue(); return; }
-      const target = words(step.text);
-      const best = Math.max(...alts.map((a) => {
-        const set = new Set(words(a));
-        return target.filter((w) => set.has(w)).length / target.length;
-      }));
       if (best >= 0.6 || s.tries >= 1) {
         confetti();
         gpSay((best >= 0.6 ? pick(READ_OK) : "Cháu cố gắng lắm! Mình cùng đọc lại một lần nữa nhé: " + step.text), { cls: "praise" });
@@ -632,7 +734,7 @@
       } else {
         s.tries++;
         gpSay("Gần đúng rồi cháu ơi! Cháu nghe {X} đọc lại nhé: " + step.text);
-        answerBox({ placeholder: "Cháu thử lại nhé…", extraButtons: doneBtn, onAnswer: (t, a) => handle(t, a) });
+        answerBox({ placeholder: "Cháu thử lại nhé…", extraButtons: doneBtn, onAnswer: (t, a, i, src2) => handle(t, a, src2) });
         $("#btn-read").onclick = () => { stopSpeak(); handle(null); };
       }
     }
@@ -641,6 +743,13 @@
   function finish() {
     const s = state.session;
     const st = stats();
+    const lessonId = s.mode === "quiz" ? "quiz" : s.item.id;
+    const firstTime = !st.lessons.some((l) => l.id === lessonId) || s.mode === "quiz";
+    let award = null;
+    if (firstTime) {
+      award = window.OBK_ART.stickers.find((x) => !st.stickers.includes(x.id));
+      if (award) st.stickers.push(award.id);
+    }
     st.lessons = [{ id: s.mode === "quiz" ? "quiz" : s.item.id, mode: s.mode, title: s.title, date: today() }]
       .concat(st.lessons.filter((l) => l.id !== (s.mode === "quiz" ? "quiz" : s.item.id))).slice(0, 20);
     saveStats(st);
@@ -654,12 +763,31 @@
     confetti();
     gpSay(msg, { cls: "praise" });
     const p = panel(`<div class="btn-row">
-      <button class="btn btn-big" id="btn-again">${s.mode === "quiz" ? "🔁 Chơi lượt mới" : "🔁 Học lại bài này"}</button>
-      <button class="btn btn-big btn-green" id="btn-other">📚 Chọn bài khác</button>
-      <button class="btn btn-ghost" id="btn-to-parent">👪 Gợi ý cho bố mẹ</button></div>`);
+      <button class="btn btn-big" id="btn-again">${IC.again} ${s.mode === "quiz" ? "Chơi lượt mới" : "Học lại bài này"}</button>
+      <button class="btn btn-big btn-green" id="btn-other">${IC.grid} Chọn bài khác</button>
+      <button class="btn btn-ghost" id="btn-to-parent">${IC.family} Gợi ý cho bố mẹ</button></div>`);
     $("#btn-again", p).onclick = () => startSession(s.mode, s.item);
     $("#btn-other", p).onclick = () => { if (s.mode === "quiz") show("modes"); else openMode(s.mode); };
     $("#btn-to-parent", p).onclick = () => show("parent");
+    if (award) setTimeout(() => showReward(award), 900);
+  }
+
+  function showReward(st) {
+    const n = (settings.name || "").trim();
+    $("#reward-art").innerHTML = window.OBK_ART.sticker(st.id);
+    $("#reward-title").textContent = n ? `Giỏi lắm, ${n}!` : "Giỏi lắm cháu ơi!";
+    $("#reward-name").textContent = st.name;
+    $("#reward").hidden = false;
+    SND.sfx("finish");
+    $("#reward-ok").focus();
+  }
+
+  function renderStickers() {
+    const own = new Set(stats().stickers);
+    $("#sticker-grid").innerHTML = window.OBK_ART.stickers.map((x) => own.has(x.id)
+      ? `<div class="sticker got">${window.OBK_ART.sticker(x.id)}<span>${esc(x.name)}</span></div>`
+      : `<div class="sticker locked">${window.OBK_ART.sticker(x.id)}<span>Chưa mở</span></div>`).join("");
+    $("#sticker-progress").textContent = `Cháu đã có ${own.size} trên ${window.OBK_ART.stickers.length} nhãn dán. Học xong một bài mới là được thêm một nhãn.`;
   }
 
   /* ===================== AI thật ===================== */
@@ -711,8 +839,8 @@
         } catch (e) {
           dots.remove();
           gpSay("{Xc} nghe không rõ lắm, chắc mạng yếu. Mình nói chuyện theo bài soạn sẵn nhé!");
-          const p = panel(`<div class="btn-row"><button class="btn btn-big" id="btn-retry">🔁 Thử lại</button>
-            <button class="btn btn-big btn-green" id="btn-script">🍚 Trò chuyện theo bài</button></div>`);
+          const p = panel(`<div class="btn-row"><button class="btn btn-big" id="btn-retry">${IC.again} Thử lại</button>
+            <button class="btn btn-big btn-green" id="btn-script">${IC.grid} Trò chuyện theo bài</button></div>`);
           $("#btn-retry", p).onclick = () => { s.ai.pop(); aiInput(); };
           $("#btn-script", p).onclick = () => openMode("chats");
           console.warn("AI lỗi:", e);
@@ -728,6 +856,15 @@
     $("#st-today").textContent = Math.round((st.days[today()] || 0) / 60);
     $("#st-total").textContent = Math.round(st.seconds / 60);
     $("#st-lessons").textContent = st.lessons.length;
+    $("#st-said").textContent = st.said;
+    $("#st-uptake").textContent = st.uptake;
+    $("#st-stickers").textContent = st.stickers.length;
+    const n = (settings.name || "").trim();
+    $("#parent-sub").textContent = n ? `Tiến bộ của ${n}` : "Tiến bộ của con";
+    const tm = Object.entries(st.toneMiss).sort((a, b) => b[1] - a[1]).slice(0, 10);
+    $("#tone-list").innerHTML = tm.length
+      ? tm.map(([w, c]) => `<span class="chip tone">${esc(w)} <b>${c}</b></span>`).join("")
+      : '<span class="muted">Chưa có. Khi con nói to và đọc theo, chữ nào con hay nói sai dấu sẽ hiện ở đây.</span>';
 
     // gợi ý: lấy từ bài gần nhất
     let tips = D.generalTips, from = "Con chưa học bài nào, đây là gợi ý chung.";
@@ -750,7 +887,7 @@
     chips.innerHTML = ws.length ? "" : '<span class="muted">Chưa có từ nào. Con học một bài là sẽ có nhé!</span>';
     ws.forEach((w) => {
       const b = document.createElement("button");
-      b.className = "chip"; b.textContent = (st.words[w].looked ? "⭐ " : "") + w;
+      b.className = "chip" + (st.words[w].looked ? " starred" : ""); b.textContent = w;
       b.onclick = () => openWord(w);
       chips.appendChild(b);
     });
@@ -779,7 +916,7 @@
     $("#set-endpoint").value = settings.endpoint || CFG.aiEndpoint || "";
     renderVoiceStatus();
     $("#mic-status").textContent = SR
-      ? "✅ Trình duyệt này nhận được giọng nói tiếng Việt. Bấm 🎤 khi trả lời."
+      ? "✅ Trình duyệt này nhận được giọng nói tiếng Việt. Bấm nút micro đỏ khi trả lời."
       : "⚠️ Trình duyệt này chưa nhận giọng nói. Hãy dùng Chrome trên máy tính hoặc Android. Cháu vẫn gõ chữ hoặc bấm chọn được.";
     $("#ai-status").textContent = endpoint()
       ? (settings.ai ? "AI đang bật." : "AI đang tắt.")
@@ -817,7 +954,8 @@
       "{Xc} nói chuyện với cháu vui quá! Mai mình nói chuyện tiếp nhé.",
       "Cháu ơi, hôm nay cháu muốn kể gì cho {X} nghe nào?",
       "{Xc} nghe không rõ lắm, chắc mạng yếu. Mình nói chuyện theo bài soạn sẵn nhé!",
-      "Chào cháu, {X} đây. Cháu có khỏe không?"
+      "Chào cháu, {X} đây. Cháu có khỏe không?",
+      "Cháu nói lại câu đó cùng {X} nhé!"
     ]).forEach(add);
     Object.keys(D.glossary).forEach((w) => out.push(w));
     state.char = keep;
@@ -898,15 +1036,38 @@
   }, true);
 
   bind();
+  const nameEl = $("#kid-name");
+  nameEl.value = settings.name || "";
+  nameEl.oninput = () => { settings.name = nameEl.value.trim().slice(0, 20); saveSettings(); };
+  $("#btn-stickers").onclick = () => show("stickers");
+  $("#reward-ok").onclick = () => { $("#reward").hidden = true; };
+
+  /* Màn mở đầu kéo rèm (mỗi lần mở trang một lần) */
+  (function splash() {
+    const sp = $("#splash");
+    let seen = false;
+    try { seen = sessionStorage.getItem("obk_splash") === "1"; } catch (e) {}
+    if (seen || matchMedia("(prefers-reduced-motion: reduce)").matches) { sp.remove(); return; }
+    const open = () => {
+      if (sp.classList.contains("open")) return;
+      sp.classList.add("open");
+      try { sessionStorage.setItem("obk_splash", "1"); } catch (e) {}
+      setTimeout(() => sp.remove(), 1300);
+    };
+    sp.addEventListener("click", open);
+    setTimeout(open, 2400);
+  })();
+
+  /* Chạy được khi mất mạng (chỉ khi trang chạy qua https, ví dụ GitHub Pages) */
+  if ("serviceWorker" in navigator && location.protocol === "https:") {
+    navigator.serviceWorker.register("sw.js").catch(() => {});
+  }
   $("#btn-music").onclick = () => { settings.music = !settings.music; saveSettings(); applyFx(); musicFollow(); };
   makePetals();
   applyFx();
   setInterval(applyFx, 60000);
   renderArt();
   renderSvgSlots();
-  if (state.char) {
-    const x = state.char === "ba" ? "Bà" : "Ông";
-    $("#greet-text").textContent = `${x} đây! Hôm nay cháu muốn làm gì với ${x.toLowerCase()} nào?`;
-  }
+  if (state.char) setGreeting();
   show("home", false);
 })();

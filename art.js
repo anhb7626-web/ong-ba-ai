@@ -91,4 +91,68 @@
     hero,
     icon(id) { return icons[id] ? svg(icons[id]) : ""; }
   };
+
+  /* ---------- Nhãn dán con giống (phỏng theo tranh Đông Hồ) ---------- */
+  const stickers = [
+    { id: "ga", name: "Gà trống", body: `<path d="M18 46 Q14 28 28 24 Q30 14 38 16 Q44 18 42 26 Q54 28 52 42 Q50 52 36 54 Q22 54 18 46Z" fill="${Y}" ${sw}/><path d="M36 12 q2 -6 6 -2 q4 -4 5 2 q-5 2 -11 0z" fill="${R}" ${sw}/><path d="M43 22 L50 24 L43 26Z" fill="${Y}" ${sw}/><circle cx="38" cy="21" r="1.8" fill="${K}"/><path d="M18 40 Q4 30 10 18 Q14 30 20 32 Q8 20 16 12 Q18 26 24 30" fill="${G}" ${sw}/><path d="M28 54 V60 M36 54 V60" ${sw}/><path d="M26 38 q8 6 16 0" stroke="${R}" stroke-width="2.5" fill="none"/>` },
+    { id: "lon", name: "Lợn đàn", body: `<ellipse cx="32" cy="36" rx="24" ry="15" fill="#3a2f2a" ${sw}/><path d="M14 30 q6 -4 12 0 q-6 4 -12 0z M30 26 q6 -4 12 0 q-6 4 -12 0z M24 42 q6 -4 12 0 q-6 4 -12 0z" fill="none" stroke="${W}" stroke-width="2"/><ellipse cx="56" cy="36" rx="5" ry="6" fill="${P}" ${sw}/><path d="M46 22 l4 -6 l3 8" fill="#3a2f2a" ${sw}/><circle cx="48" cy="31" r="1.8" fill="${W}"/><path d="M16 50 v8 M26 51 v8 M40 51 v8 M48 50 v8" ${sw}/><path d="M8 34 q-4 -4 0 -8" ${sw} fill="none"/>` },
+    { id: "ca-chep", name: "Cá chép", body: `<path d="M8 34 Q26 12 46 30 Q26 52 8 34Z" fill="#e2703a" ${sw}/><path d="M46 30 L60 18 Q56 30 60 44Z" fill="${R}" ${sw}/><path d="M20 28 q4 4 0 8 M28 24 q4 6 0 14 M36 26 q4 6 0 10" stroke="${K}" stroke-width="1.6" fill="none" opacity=".6"/><circle cx="16" cy="31" r="2.2" fill="${K}"/><path d="M8 36 q-4 4 -2 10 M10 36 q-2 6 2 10" stroke="${K}" stroke-width="1.6" fill="none"/><path d="M26 16 l6 -8 l4 10" fill="${Y}" ${sw}/>` },
+    { id: "trau", name: "Trâu", body: `<ellipse cx="30" cy="38" rx="22" ry="13" fill="#5b5f6a" ${sw}/><ellipse cx="52" cy="32" rx="9" ry="8" fill="#5b5f6a" ${sw}/><path d="M46 26 Q40 14 50 12 Q46 18 50 24 M58 26 Q64 14 56 12 Q60 18 56 24" fill="${W}" ${sw}/><circle cx="54" cy="31" r="1.6" fill="${W}"/><path d="M14 48 v10 M22 50 v8 M38 50 v8 M46 46 v12" ${sw}/><path d="M8 34 q-4 6 -2 12" ${sw} fill="none"/><circle cx="20" cy="14" r="5" fill="${Y}" ${sw}/>` },
+    { id: "coc", name: "Cóc", body: `<ellipse cx="32" cy="40" rx="22" ry="15" fill="#7fa65a" ${sw}/><circle cx="22" cy="26" r="7" fill="#7fa65a" ${sw}/><circle cx="42" cy="26" r="7" fill="#7fa65a" ${sw}/><circle cx="22" cy="26" r="3" fill="${K}"/><circle cx="42" cy="26" r="3" fill="${K}"/><path d="M20 42 Q32 50 44 42" ${sw} fill="none"/><circle cx="16" cy="46" r="2" fill="${Y}"/><circle cx="48" cy="38" r="2" fill="${Y}"/><circle cx="30" cy="52" r="2" fill="${Y}"/><path d="M10 52 l-6 6 M54 52 l6 6" ${sw}/>` },
+    { id: "chuot", name: "Chuột", body: `<ellipse cx="30" cy="40" rx="18" ry="12" fill="#9a8f86" ${sw}/><circle cx="46" cy="32" r="8" fill="#9a8f86" ${sw}/><circle cx="44" cy="22" r="5" fill="${P}" ${sw}/><circle cx="50" cy="31" r="1.6" fill="${K}"/><path d="M54 34 h6 M54 36 l6 2" stroke="${K}" stroke-width="1.5"/><path d="M12 40 Q2 30 10 22" ${sw} fill="none"/><path d="M20 30 L24 10 L28 30" fill="${R}" ${sw}/><path d="M22 50 v6 M36 50 v6" ${sw}/>` },
+    { id: "vit", name: "Vịt", body: `<path d="M10 40 Q12 26 30 30 Q36 14 46 18 Q52 22 48 30 Q58 34 52 46 Q40 56 22 52 Q10 50 10 40Z" fill="${W}" ${sw}/><path d="M48 22 L60 24 L48 28Z" fill="${Y}" ${sw}/><circle cx="44" cy="22" r="1.8" fill="${K}"/><path d="M20 40 q10 6 20 0" stroke="${K}" stroke-width="2" fill="none" opacity=".5"/><path d="M4 56 q8 -4 16 0 t16 0 t16 0 t12 0" stroke="${B}" stroke-width="2.5" fill="none" stroke-linecap="round"/>` },
+    { id: "rong", name: "Rồng", body: `<path d="M6 44 Q14 30 24 40 Q34 50 42 36 Q48 24 58 30" fill="none" stroke="${G}" stroke-width="9" stroke-linecap="round"/><path d="M6 44 Q14 30 24 40 Q34 50 42 36 Q48 24 58 30" fill="none" stroke="${K}" stroke-width="2" stroke-dasharray="2 5" stroke-linecap="round"/><circle cx="56" cy="28" r="7" fill="${G}" ${sw}/><circle cx="58" cy="26" r="1.6" fill="${K}"/><path d="M52 22 l-4 -8 M58 21 l2 -9" stroke="${R}" stroke-width="2.5" stroke-linecap="round"/><path d="M14 36 l-2 -6 M30 44 l0 -8 M44 32 l-3 -6" stroke="${R}" stroke-width="2.5" stroke-linecap="round"/><circle cx="20" cy="16" r="5" fill="${R}" ${sw}/>` }
+  ];
+
+  /* ---------- Cảnh nền cho từng bài (có chuyển động nhẹ) ---------- */
+  const sky = (c1, c2) => `<defs><linearGradient id="sk${c1.slice(1)}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></linearGradient></defs><rect width="360" height="120" fill="url(#sk${c1.slice(1)})"/>`;
+  const birds = `<g class="fly"><path d="M0 0 q5 -5 10 0 q5 -5 10 0" fill="none" stroke="${K}" stroke-width="2"/><path d="M26 10 q4 -4 8 0 q4 -4 8 0" fill="none" stroke="${K}" stroke-width="2"/></g>`;
+  const scenes = {
+    stories: sky("#fbe8c3", "#f6d9a6") + `<circle cx="300" cy="34" r="18" fill="${Y}" opacity=".5"/>` + birds +
+      `<path d="M0 90 Q90 70 180 88 T360 84 V120 H0Z" fill="#9cc46a" ${sw}/>`,
+    "tam-cam": sky("#dff0f5", "#cfe6ee") +
+      `<path d="M0 70 Q60 56 120 66 T240 62 T360 66 V120 H0Z" fill="#9cc46a" ${sw}/>` +
+      `<path d="M0 84 Q180 74 360 84 V120 H0Z" fill="#6fa6c9" ${sw}/>` +
+      `<g class="wave"><path d="M10 98 q10 -6 20 0 t20 0 M120 104 q10 -6 20 0 t20 0 M250 96 q10 -6 20 0 t20 0" stroke="${W}" stroke-width="2" fill="none"/></g>` +
+      `<g class="swim"><path d="M0 0 Q12 -10 26 0 Q12 10 0 0Z" fill="${Y}" ${sw}/><path d="M26 0 L36 -7 L34 0 L36 7Z" fill="${R}" ${sw}/><circle cx="7" cy="-2" r="1.6" fill="${K}"/></g>` +
+      `<g fill="${G}" ${sw}><path d="M300 70 q-4 -30 2 -44 q4 20 2 44z"/><path d="M314 72 q0 -26 10 -36 q-2 20 -6 36z"/><path d="M290 72 q-8 -20 -16 -26 q6 16 8 26z"/></g>` +
+      `<g><circle cx="70" cy="40" r="10" fill="${P}" ${sw}/><path d="M70 50 v16" ${sw}/></g>`,
+    "dua-hau": sky("#cfe9f2", "#bde0ea") + `<circle cx="300" cy="30" r="16" fill="${Y}" ${sw}/>` + birds +
+      `<path d="M0 86 Q180 76 360 86 V120 H0Z" fill="#4d8fbf" ${sw}/>` +
+      `<g class="wave"><path d="M20 100 q10 -6 20 0 t20 0 M150 106 q10 -6 20 0 t20 0 M280 98 q10 -6 20 0 t20 0" stroke="${W}" stroke-width="2" fill="none"/></g>` +
+      `<path d="M70 88 Q120 50 190 88Z" fill="#e9cf8f" ${sw}/>` +
+      `<path d="M130 62 q-2 -26 4 -36" stroke="#7a5230" stroke-width="4" fill="none"/><path d="M134 26 q-16 -4 -26 6 M134 26 q14 -6 26 2 M134 26 q-6 10 -16 12 M134 26 q8 8 18 10" stroke="${G}" stroke-width="4" fill="none" stroke-linecap="round"/>` +
+      `<g><ellipse cx="160" cy="80" rx="12" ry="9" fill="${G}" ${sw}/><path d="M152 76 q8 4 16 0" stroke="#9cc46a" stroke-width="2" fill="none"/></g>` +
+      `<g class="boat"><path d="M250 86 h40 l-6 8 h-28z" fill="#7a5230" ${sw}/><path d="M270 86 V60 L290 82Z" fill="${W}" ${sw}/></g>`,
+    "cay-khe": sky("#fbeecf", "#f6dfae") + `<circle cx="40" cy="30" r="14" fill="${Y}" opacity=".6"/>` +
+      `<path d="M0 92 Q180 80 360 92 V120 H0Z" fill="#9cc46a" ${sw}/>` +
+      `<path d="M200 92 q4 -30 -2 -50" stroke="#7a5230" stroke-width="8" fill="none" stroke-linecap="round"/>` +
+      `<g class="sway-tree"><circle cx="200" cy="38" r="34" fill="${G}" ${sw}/><circle cx="172" cy="48" r="20" fill="${G}" ${sw}/><circle cx="228" cy="48" r="20" fill="${G}" ${sw}/>` +
+      `<g fill="${Y}" ${sw}><path d="M186 40 l3 -8 l3 8 l8 -2 l-6 6 l4 7 l-9 -4 l-9 4 l4 -7 l-6 -6z"/><path d="M214 30 l3 -8 l3 8 l8 -2 l-6 6 l4 7 l-9 -4 l-9 4 l4 -7 l-6 -6z"/><path d="M216 56 l3 -8 l3 8 l8 -2 l-6 6 l4 7 l-9 -4 l-9 4 l4 -7 l-6 -6z"/></g></g>` +
+      `<g class="bigbird"><path d="M0 0 q14 -14 30 0 q16 -14 30 0 q-14 6 -30 4 q-16 2 -30 -4z" fill="#3a2f2a" ${sw}/><path d="M30 2 l6 6 l-8 0z" fill="${Y}" ${sw}/></g>`,
+    chats: sky("#fbe8c3", "#f6d9a6") +
+      `<rect x="0" y="86" width="360" height="34" fill="#b07b45" ${sw}/><path d="M0 96 H360" stroke="${K}" stroke-width="1.5" opacity=".4"/>` +
+      `<ellipse cx="180" cy="84" rx="110" ry="14" fill="#c99a63" ${sw}/>` +
+      `<g><path d="M130 80 H170 Q170 96 150 96 Q130 96 130 80Z" fill="${B}" ${sw}/><path d="M134 80 Q136 68 150 68 Q164 68 166 80" fill="${W}" ${sw}/></g>` +
+      `<g><path d="M190 80 H234 Q234 98 212 98 Q190 98 190 80Z" fill="${W}" ${sw}/><path d="M196 80 Q212 70 228 80" fill="#e2703a" ${sw}/></g>` +
+      `<g class="steam"><path d="M146 62 q-4 -6 0 -12 q4 -6 0 -12 M156 62 q-4 -6 0 -12 q4 -6 0 -12" stroke="${K}" stroke-width="2" fill="none" opacity=".4"/></g>` +
+      `<path d="M240 74 L270 60 M244 78 L274 66" stroke="${R}" stroke-width="3" stroke-linecap="round"/>`,
+    rhymes: sky("#f3dcea", "#ecc9dd") + birds +
+      `<path d="M0 94 Q180 84 360 94 V120 H0Z" fill="#9cc46a" ${sw}/>` +
+      `<g><path d="M110 50 L180 22 L250 50Z" fill="#a4442a" ${sw}/><rect x="124" y="50" width="112" height="44" fill="${W}" ${sw}/><rect x="166" y="64" width="28" height="30" fill="${R}" ${sw}/><path d="M104 52 q-8 -10 2 -14 M256 52 q8 -10 -2 -14" stroke="${K}" stroke-width="2.5" fill="none"/></g>` +
+      `<g class="kids"><circle cx="60" cy="74" r="6" fill="${S}" ${sw}/><path d="M54 96 l4 -16 h6 l4 16z" fill="${R}" ${sw}/><circle cx="84" cy="74" r="6" fill="${S}" ${sw}/><path d="M78 96 l4 -16 h6 l4 16z" fill="${B}" ${sw}/><path d="M66 84 h14" ${sw}/></g>`,
+    quiz: sky("#fbe8c3", "#f8d98f") +
+      `<path d="M0 18 Q180 40 360 18" stroke="${K}" stroke-width="2" fill="none"/>` +
+      [40, 100, 160, 220, 280, 330].map((x, i) => `<g class="swing" style="transform-origin:${x}px ${20 + Math.sin(i) * 4}px;animation-delay:${-i * .4}s"><line x1="${x}" y1="${22 + (i % 2) * 6}" x2="${x}" y2="${34 + (i % 2) * 6}" stroke="${K}" stroke-width="1.5"/><ellipse cx="${x}" cy="${48 + (i % 2) * 6}" rx="13" ry="12" fill="${[R, Y, "#d9572e", G, R, Y][i]}" ${sw}/><rect x="${x - 5}" y="${58 + (i % 2) * 6}" width="10" height="4" fill="${Y}" ${sw}/></g>`).join("") +
+      `<path d="M0 100 Q180 90 360 100 V120 H0Z" fill="#c99a63" ${sw}/>`,
+    ai: null
+  };
+  scenes.ai = scenes.chats;
+
+  window.OBK_ART.sticker = (id) => { const s = stickers.find((x) => x.id === id); return s ? svg(s.body) : ""; };
+  window.OBK_ART.stickers = stickers.map(({ id, name }) => ({ id, name }));
+  window.OBK_ART.scene = (id, mode) => {
+    const body = scenes[id] || scenes[mode];
+    return body ? svg(body, "0 0 360 120") : "";
+  };
 })();

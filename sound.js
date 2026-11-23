@@ -14,7 +14,7 @@
   // Ngũ cung Bắc trên nền Đô: C D F G A, hai quãng tám
   const BASE = 261.63;
   const SCALE = [0, 2, 5, 7, 9, 12, 14, 17, 19, 21].map((s) => BASE * Math.pow(2, s / 12));
-  const BPM = 66, BEAT = 60 / BPM;
+  let BPM = 66, BEAT = 60 / BPM, lively = false;
 
   function init() {
     if (ctx) { if (ctx.state === "suspended") ctx.resume(); return true; }
@@ -62,6 +62,21 @@
     o.connect(g); g.connect(bus); o.start(t); o.stop(t + dur + 0.05);
   }
 
+  function drum(t, vol) {
+    const o = ctx.createOscillator(); o.type = "sine";
+    o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(70, t + 0.18);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.35);
+    o.connect(g); g.connect(musicBus); o.start(t); o.stop(t + 0.4);
+  }
+  function click(t) {
+    const o = ctx.createOscillator(); o.type = "square"; o.frequency.value = 1400;
+    const f = ctx.createBiquadFilter(); f.type = "bandpass"; f.frequency.value = 1600; f.Q.value = 4;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.18, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.05);
+    o.connect(f); f.connect(g); g.connect(musicBus); o.start(t); o.stop(t + 0.06);
+  }
+
   /* Bộ phát nhạc: lên lịch trước vài trăm mili giây */
   function schedule() {
     while (nextTime < ctx.currentTime + 0.4) {
@@ -70,6 +85,11 @@
         const root = (Math.floor(step / 8) % 4 === 2) ? BASE / 2 * 1.4983 : BASE / 2;
         soft(root, nextTime, BEAT * 7.5, 0.22, musicBus);
         soft(root / 2, nextTime, BEAT * 7.5, 0.12, musicBus);
+      }
+      // nhịp trống cơm khi chơi đố vui, đồng dao: "tùng" ở phách mạnh, "cắc" ở phách nhẹ
+      if (lively) {
+        if (bar === 0 || bar === 4 || bar === 6) drum(nextTime, bar === 0 ? 0.5 : 0.35);
+        if (bar === 2 || bar === 3 || bar === 7) click(nextTime);
       }
       // giai điệu: đi từng bậc là chính, thỉnh thoảng nhảy, có lúc nghỉ
       const rest = Math.random() < (bar % 2 ? 0.45 : 0.15);
@@ -101,6 +121,10 @@
       playing = false;
       musicBus.gain.setTargetAtTime(0, ctx.currentTime, 0.3);
       setTimeout(() => { if (!playing) clearInterval(timer); }, 1200);
+    },
+    style(name) {
+      lively = name === "lively";
+      BPM = lively ? 92 : 66; BEAT = 60 / BPM;
     },
     duck(on) {
       if (!ctx || !playing) return;

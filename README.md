@@ -15,6 +15,10 @@ Web app tĩnh (HTML/CSS/JS), không cần máy chủ, chạy trên GitHub Pages.
   Trình duyệt không hỗ trợ thì vẫn dùng bằng chữ.
 - **Xem nghĩa**: từ khó được gạch chân, hiện nghĩa tiếng Anh và tiếng Trung (giản thể + pinyin).
 - **Góc phụ huynh**: thời gian luyện, từ mới đã gặp, 3 câu gợi ý hỏi con trong bữa cơm. Lưu bằng localStorage.
+- **Mời bé nói lại** câu đúng sau khi được nhắc (uptake), **tô màu chữ sai dấu** khi bé nói hoặc gõ.
+- **Sổ nhãn dán** 8 con giống phỏng theo tranh Đông Hồ, mỗi bài học xong nhận một con.
+- **Nhạc nền đàn tranh ngũ cung** tự tạo bằng Web Audio, tiếng động, cảnh nền chuyển động, cảnh đêm sau 18 giờ, màn mở đầu kéo rèm.
+- **Chạy khi mất mạng** và cài lên màn hình điện thoại (PWA) khi mở qua GitHub Pages.
 - **Trò chuyện tự do với AI thật** (Qwen của Aliyun) qua một trạm Cloudflare Worker. Không bật thì app chạy hoàn toàn bằng kịch bản.
 
 ## Cấu trúc
