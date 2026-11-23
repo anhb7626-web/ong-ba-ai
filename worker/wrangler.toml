@@ -1,9 +1,0 @@
-name = "ong-ba-ke-ai"
-main = "worker.js"
-compatibility_date = "2024-09-01"
-
-[vars]
-ALLOWED_ORIGINS = "https://anhb7626-web.github.io,http://localhost:8000"
-MODEL = "qwen-plus"
-# DASHSCOPE_BASE = "https://dashscope.aliyuncs.com/compatible-mode/v1"   # bỏ dấu # nếu dùng tài khoản Aliyun Trung Quốc
-# Key KHÔNG để ở đây. Chạy: npx wrangler secret put DASHSCOPE_API_KEY

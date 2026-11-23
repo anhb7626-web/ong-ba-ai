@@ -1,0 +1,14 @@
+# Cấu hình trạm AI trên Cloudflare (tự triển khai mỗi khi có thay đổi trên nhánh main).
+# Tên phải trùng tên Worker trên Cloudflare: ong-ba-ai
+name = "ong-ba-ai"
+main = "worker/worker.js"
+compatibility_date = "2024-09-01"
+
+[vars]
+ALLOWED_ORIGINS = "https://anhb7626-web.github.io,http://localhost:8000"
+MODEL = "qwen-plus"
+# Tài khoản Aliyun Bách Luyện (Trung Quốc). Nếu dùng bản quốc tế, đổi thành:
+# https://dashscope-intl.aliyuncs.com/compatible-mode/v1
+DASHSCOPE_BASE = "https://dashscope.aliyuncs.com/compatible-mode/v1"
+# API key KHÔNG để ở đây: thêm trên Cloudflare → Settings → Variables and Secrets,
+# tên DASHSCOPE_API_KEY, loại Secret.
