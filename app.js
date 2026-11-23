@@ -3,6 +3,7 @@
   "use strict";
 
   const D = window.OBK_DATA;
+  const SND = window.OBK_SOUND;
   const CFG = window.OBK_CONFIG || {};
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
@@ -17,7 +18,7 @@
   };
 
   const settings = Object.assign(
-    { autoread: true, rate: 0.9, ai: false, endpoint: "" },
+    { autoread: true, rate: 0.9, ai: false, endpoint: "", music: true, sfx: true, fx: true },
     store.get("settings", {})
   );
   const saveSettings = () => store.set("settings", settings);
@@ -181,15 +182,16 @@
     player.pause();
     const persona = state.char === "ba" ? "ba" : "ong";
     setTalking(true);
+    SND.duck(true);
     for (const seg of segments(text)) {
       if (token !== speakToken) return;
       const key = hashKey(persona, seg);
       if (audioSet[persona].has(key)) await fileSay(`audio/${persona}/${key}.mp3`, token);
       else await browserSay(seg, token);
     }
-    if (token === speakToken) setTalking(false);
+    if (token === speakToken) { setTalking(false); SND.duck(false); }
   }
-  function stopSpeak() { speakToken++; if (synth) synth.cancel(); player.pause(); setTalking(false); }
+  function stopSpeak() { speakToken++; if (synth) synth.cancel(); player.pause(); setTalking(false); SND.duck(false); }
 
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   let rec = null;
@@ -590,10 +592,12 @@
           s.score++;
           confetti();
           setMood("happy", 2600);
+          SND.sfx("correct");
           gpSay(pick(PRAISE) + (step.yes ? " " + step.yes : ""), { cls: "praise" });
         } else {
           // Recast: nhắc lại câu đúng một cách tự nhiên, rồi khen
           setMood("nod", 1400);
+          SND.sfx("gentle");
           gpSay(step.recast + " " + pick(ENCOURAGE), { cls: "praise" });
         }
         showContinue();
@@ -641,6 +645,7 @@
       .concat(st.lessons.filter((l) => l.id !== (s.mode === "quiz" ? "quiz" : s.item.id))).slice(0, 20);
     saveStats(st);
     $("#progress-bar").style.width = "100%";
+    SND.sfx("finish");
     let msg;
     if (s.mode === "quiz") msg = `Cháu trả lời đúng ${s.score} trên ${s.total} câu. ${s.score >= s.total - 1 ? "Giỏi quá!" : "Cháu học thêm là nhớ hết ngay!"} {Xc} thương cháu!`;
     else if (s.mode === "stories") msg = "Hết truyện rồi! Cháu nghe chăm chú lắm. Tối nay cháu kể lại cho bố mẹ nghe nhé!";
@@ -768,6 +773,9 @@
     $("#set-rate").value = settings.rate;
     $("#rate-label").textContent = settings.rate.toFixed(2) + "×";
     $("#set-ai").checked = settings.ai;
+    $("#set-music").checked = settings.music;
+    $("#set-sfx").checked = settings.sfx;
+    $("#set-fx").checked = settings.fx;
     $("#set-endpoint").value = settings.endpoint || CFG.aiEndpoint || "";
     renderVoiceStatus();
     $("#mic-status").textContent = SR
@@ -838,6 +846,9 @@
     $("#set-autoread").onchange = (e) => { settings.autoread = e.target.checked; saveSettings(); if (!settings.autoread) stopSpeak(); };
     $("#set-rate").oninput = (e) => { settings.rate = +e.target.value; $("#rate-label").textContent = settings.rate.toFixed(2) + "×"; saveSettings(); };
     $("#btn-test-voice").onclick = () => speak(fill("Chào cháu, {X} đây. Cháu có khỏe không?"), true);
+    $("#set-music").onchange = (e) => { settings.music = e.target.checked; saveSettings(); applyFx(); musicFollow(); };
+    $("#set-sfx").onchange = (e) => { settings.sfx = e.target.checked; saveSettings(); applyFx(); };
+    $("#set-fx").onchange = (e) => { settings.fx = e.target.checked; saveSettings(); applyFx(); };
     $("#set-ai").onchange = (e) => { settings.ai = e.target.checked; saveSettings(); renderSettings(); };
     $("#set-endpoint").onchange = (e) => { settings.endpoint = e.target.value.trim(); saveSettings(); renderSettings(); };
     $("#btn-test-ai").onclick = async () => {
@@ -850,7 +861,47 @@
     document.addEventListener("keydown", (e) => { if (e.key === "Escape") $("#sheet").hidden = true; });
   }
 
+  /* ===================== Nhạc, tiếng động, cảnh nền ===================== */
+  function applyFx() {
+    SND.sfxOn = settings.sfx;
+    document.body.classList.toggle("no-fx", !settings.fx);
+    const h = new Date().getHours();
+    document.body.classList.toggle("night", h >= 18 || h < 6);
+    const btn = $("#btn-music");
+    btn.classList.toggle("off", !settings.music);
+    btn.setAttribute("aria-pressed", settings.music ? "true" : "false");
+  }
+  function makePetals() {
+    const box = $("#petals");
+    for (let i = 0; i < 14; i++) {
+      const p = document.createElement("span");
+      p.className = "petal" + (i % 3 === 0 ? " mai" : "");
+      p.style.left = Math.random() * 100 + "vw";
+      p.style.animationDuration = 9 + Math.random() * 9 + "s";
+      p.style.animationDelay = -Math.random() * 18 + "s";
+      p.style.transform = "scale(" + (0.7 + Math.random() * 0.6) + ")";
+      box.appendChild(p);
+    }
+  }
+  function musicFollow() { if (settings.music) SND.startMusic(); else SND.stopMusic(); }
+  // Trình duyệt chỉ cho phát âm thanh sau lần chạm đầu tiên
+  document.addEventListener("pointerdown", function first() {
+    SND.unlock(); musicFollow();
+    document.removeEventListener("pointerdown", first);
+  });
+  // Tiếng "cốc" khi bấm nút (trừ ô đáp án: đã có tiếng đúng/sai riêng)
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest("button");
+    if (!b || b.classList.contains("choice")) return;
+    if (b.classList.contains("mode-card") || b.classList.contains("item") || b.classList.contains("char-card")) SND.sfx("page");
+    else SND.sfx("tap");
+  }, true);
+
   bind();
+  $("#btn-music").onclick = () => { settings.music = !settings.music; saveSettings(); applyFx(); musicFollow(); };
+  makePetals();
+  applyFx();
+  setInterval(applyFx, 60000);
   renderArt();
   renderSvgSlots();
   if (state.char) {

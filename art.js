@@ -9,15 +9,17 @@
   const sw = 'stroke="' + K + '" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"';
   const svg = (body, vb = "0 0 64 64") => `<svg viewBox="${vb}" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${body}</svg>`;
 
-  const lantern = (x, y, s = 1, col = R) => `
+  const lantern = (x, y, s = 1, col = R, delay = 0) => `
+    <g class="swing" style="transform-origin:${x}px ${y - 30 * s}px;animation-delay:${delay}s">
     <g transform="translate(${x} ${y}) scale(${s})">
+      <ellipse class="glow" cx="0" cy="6" rx="26" ry="24" fill="${Y}" opacity="0"/>
       <line x1="0" y1="-30" x2="0" y2="-12" stroke="${K}" stroke-width="2"/>
       <rect x="-7" y="-14" width="14" height="5" rx="1.5" fill="${Y}" ${sw}/>
       <ellipse cx="0" cy="6" rx="17" ry="16" fill="${col}" ${sw}/>
       <path d="M-9 -7 Q-14 6 -9 19 M0 -10 V22 M9 -7 Q14 6 9 19" stroke="${K}" stroke-width="1.6" fill="none" opacity=".55"/>
       <rect x="-7" y="20" width="14" height="5" rx="1.5" fill="${Y}" ${sw}/>
       <path d="M-3 25 L-4 38 M0 25 V40 M3 25 L4 38" stroke="${Y}" stroke-width="2.4" stroke-linecap="round"/>
-    </g>`;
+    </g></g>`;
 
   const hero = svg(`
     <defs>
@@ -26,17 +28,25 @@
         <path d="M0 10 Q8 0 16 10" fill="#bd5634" stroke="${K}" stroke-width="1.6"/>
       </pattern>
     </defs>
-    <circle cx="300" cy="78" r="26" fill="${Y}" opacity=".35"/>
+    <rect class="sky" x="0" y="0" width="360" height="150" fill="transparent"/>
+    <g class="stars" fill="#fff6d8">
+      <circle cx="40" cy="104" r="1.4"/><circle cx="96" cy="128" r="1.1"/><circle cx="180" cy="118" r="1.5"/>
+      <circle cx="210" cy="140" r="1"/><circle cx="276" cy="132" r="1.3"/><circle cx="348" cy="112" r="1.2"/>
+    </g>
+    <g class="sun"><circle cx="300" cy="80" r="30" fill="${Y}" opacity=".22"/><circle cx="300" cy="80" r="20" fill="${Y}" opacity=".35"/></g>
+    <g class="moon"><circle cx="300" cy="84" r="18" fill="#fff3c4" ${sw}/><circle cx="294" cy="80" r="3" fill="#ead9a0"/><circle cx="306" cy="90" r="2.2" fill="#ead9a0"/></g>
+    <g class="cloud c1"><path d="M0 110 q6 -10 16 -6 q4 -10 16 -6 q10 -2 12 8 q8 2 4 8 h-48 q-6 -2 0 -4z" fill="#fffaf0" ${sw} opacity=".9"/></g>
+    <g class="cloud c2"><path d="M0 128 q6 -8 14 -5 q4 -8 13 -4 q8 0 9 7 q6 2 2 6 h-38 q-4 -2 0 -4z" fill="#fffaf0" ${sw} opacity=".8"/></g>
     <!-- giàn bầu -->
     <path d="M14 150 V70 M14 70 H96" stroke="#7a5230" stroke-width="5" stroke-linecap="round"/>
-    <g fill="${G}" ${sw}>
+    <g class="leaves" fill="${G}" ${sw}>
       <path d="M22 70 c-12 -4 -14 12 -2 14 c4 -2 6 -8 2 -14z"/>
       <path d="M44 70 c-10 -8 -18 6 -8 12 c5 0 8 -6 8 -12z"/>
       <path d="M66 70 c-12 -4 -14 12 -2 14 c4 -2 6 -8 2 -14z"/>
       <path d="M88 70 c-10 -8 -18 6 -8 12 c5 0 8 -6 8 -12z"/>
     </g>
-    <path d="M52 76 c0 6 -8 8 -8 18 c0 9 6 14 12 14 c6 0 12 -5 12 -14 c0 -10 -8 -12 -8 -18z" fill="#9cc46a" ${sw}/>
-    <path d="M56 76 v-6" stroke="${K}" stroke-width="2.5"/>
+    <g class="gourd"><path d="M52 76 c0 6 -8 8 -8 18 c0 9 6 14 12 14 c6 0 12 -5 12 -14 c0 -10 -8 -12 -8 -18z" fill="#9cc46a" ${sw}/>
+    <path d="M56 76 v-6" stroke="${K}" stroke-width="2.5"/></g>
     <!-- mái ngói -->
     <path d="M-10 52 L30 14 H330 L370 52 Z" fill="url(#ngoi)" ${sw}/>
     <path d="M30 14 H330" stroke="${K}" stroke-width="3"/>
@@ -47,9 +57,9 @@
     <path d="M-14 50 Q-24 38 -10 34" fill="none" stroke="${K}" stroke-width="3"/>
     <path d="M374 50 Q384 38 370 34" fill="none" stroke="${K}" stroke-width="3"/>
     <!-- đèn lồng -->
-    ${lantern(130, 92, 1)}
-    ${lantern(240, 98, .9, "#d9572e")}
-    ${lantern(320, 88, .7, R)}
+    ${lantern(130, 92, 1, R, 0)}
+    ${lantern(240, 98, .9, "#d9572e", -1.1)}
+    ${lantern(330, 86, .7, R, -.5)}
   `, "0 0 360 150");
 
   const icons = {

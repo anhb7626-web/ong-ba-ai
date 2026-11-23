@@ -90,7 +90,7 @@ main { max-width: 720px; margin: 0 auto; padding: 22px 16px 48px; }
 .screen-title::before { content: ""; width: 14px; height: 14px; background: var(--son); border: var(--line); transform: rotate(45deg); flex: none; }
 
 /* ---------- Trang đầu ---------- */
-.hero { position: relative; margin: -22px -16px 0; overflow: hidden; }
+.hero { position: relative; margin: -22px -16px 0; padding-bottom: 22px; overflow: hidden; }
 .hero-art svg { display: block; width: 100%; height: auto; }
 .hero-text { text-align: center; margin-top: -26px; position: relative; }
 .hero-title {
@@ -98,7 +98,7 @@ main { max-width: 720px; margin: 0 auto; padding: 22px 16px 48px; }
   text-shadow: 3px 3px 0 var(--nghe-soft), -2px -2px 0 #fff8e8;
   letter-spacing: .5px;
 }
-.hero-sub { margin: 8px 16px 0; font-weight: 800; color: var(--ink-soft); font-size: .95rem; }
+.hero-sub { margin: 8px 16px 0; font-weight: 800; color: var(--ink-soft); font-size: .9rem; }
 
 .char-pick { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; padding-top: 14px; }
 .char-card {
@@ -343,5 +343,64 @@ main { max-width: 720px; margin: 0 auto; padding: 22px 16px 48px; }
   .mode-card { min-height: 200px; }
 }
 @media (prefers-reduced-motion: reduce) {
+  #petals { display: none; }
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* ================= Hiệu ứng chuyển động ================= */
+.swing { transform-box: view-box; animation: swing 3.2s ease-in-out infinite alternate; }
+@keyframes swing { from { transform: rotate(-5deg); } to { transform: rotate(5deg); } }
+.leaves path { transform-box: fill-box; transform-origin: top center; animation: sway 2.6s ease-in-out infinite alternate; }
+.leaves path:nth-child(2n) { animation-delay: -1.3s; }
+@keyframes sway { from { transform: rotate(-6deg); } to { transform: rotate(6deg); } }
+.gourd { transform-box: fill-box; transform-origin: top center; animation: sway 3.4s ease-in-out infinite alternate; }
+.cloud { animation: drift 38s linear infinite; }
+.cloud.c2 { animation-duration: 52s; animation-delay: -20s; }
+@keyframes drift { from { transform: translateX(-60px); } to { transform: translateX(400px); } }
+.sun { transform-box: fill-box; transform-origin: center; animation: breathe 5s ease-in-out infinite alternate; }
+@keyframes breathe { to { transform: scale(1.12); } }
+.moon, .stars { display: none; }
+.hero { transition: background .6s; }
+
+/* Buổi tối: trời chàm, trăng, sao, đèn lồng sáng */
+body.night .hero { background: linear-gradient(#1f2f52 0, #2f4f7f 85%, rgba(47,79,127,0) 100%); }
+body.night .sun { display: none; }
+body.night .moon, body.night .stars { display: inline; }
+body.night .stars circle { animation: twinkle 2.4s ease-in-out infinite alternate; }
+body.night .stars circle:nth-child(2n) { animation-delay: -1.2s; }
+@keyframes twinkle { from { opacity: .25; } to { opacity: 1; } }
+body.night .cloud path { fill: #c9d3e6; opacity: .55; }
+body.night .glow { opacity: .45; animation: glow 1.8s ease-in-out infinite alternate; }
+@keyframes glow { from { opacity: .25; } to { opacity: .6; } }
+body.night .hero-title { text-shadow: 3px 3px 0 #1f2f52, 0 0 18px rgba(232,163,23,.6); color: #ffd56b; }
+body.night .hero-sub { color: #f1e1bd; }
+
+/* Hoa đào, hoa mai rơi */
+#petals { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+main, .topbar { position: relative; z-index: 1; }
+.topbar { position: sticky; z-index: 10; }
+.petal {
+  position: absolute; top: -20px; width: 12px; height: 9px; border-radius: 12px 0 12px 0;
+  background: #f3a3a3; border: 1.5px solid rgba(43,29,20,.55); opacity: .85;
+  animation: petal linear infinite;
+}
+.petal.mai { background: #f6c64a; }
+@keyframes petal {
+  0% { transform: translate(0, -20px) rotate(0); }
+  25% { transform: translate(30px, 25vh) rotate(120deg); }
+  50% { transform: translate(-10px, 50vh) rotate(220deg); }
+  75% { transform: translate(35px, 75vh) rotate(320deg); }
+  100% { transform: translate(5px, 105vh) rotate(420deg); }
+}
+body.no-fx .swing, body.no-fx .leaves path, body.no-fx .gourd, body.no-fx .cloud, body.no-fx .sun { animation: none; }
+body.no-fx #petals { display: none; }
+
+/* Chuyển màn mượt hơn, nhân vật "thở" nhẹ */
+.char-art svg, .char-mini svg, .char-talk svg { animation: breath 3.6s ease-in-out infinite; transform-origin: 50% 100%; }
+@keyframes breath { 50% { transform: scale(1.015, .99); } }
+.mode-card .mode-icon { transition: transform .25s cubic-bezier(.2,1.6,.4,1); }
+.mode-card:hover .mode-icon { transform: rotate(-8deg) scale(1.08); }
+
+/* Nút nhạc trên thanh trên cùng */
+.icon-btn.off { opacity: .55; }
+.icon-btn.off svg .wave { display: none; }
