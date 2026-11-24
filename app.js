@@ -235,6 +235,8 @@
     if (synth) synth.cancel();
     player.pause();
     const persona = state.char === "ba" ? "ba" : "ong";
+    if (hush) hush();
+    const stopped = new Promise((r) => (hush = r));
     // đoạn chưa có file: xin trạm đọc từng câu cùng lúc, câu đầu xong là ông bà nói ngay
     const plan = segments(text).map((seg) => {
       const key = hashKey(persona, seg);
@@ -243,16 +245,17 @@
     SND.duck(true);
     for (const it of plan) {
       if (token !== speakToken) return;
-      if (it.file) { setTalking(true); await fileSay(it.file, token); continue; }
-      const url = await it.url;
+      if (it.file) { setTalking(true); await Promise.race([fileSay(it.file, token), stopped]); continue; }
+      const url = await Promise.race([it.url, stopped]);
       if (token !== speakToken) return;
       setTalking(true);
-      if (url) await fileSay(url, token);
-      else for (const seg of it.segs) await browserSay(seg, token);
+      if (url) await Promise.race([fileSay(url, token), stopped]);
+      else for (const seg of it.segs) await Promise.race([browserSay(seg, token), stopped]);
     }
     if (token === speakToken) { setTalking(false); SND.duck(false); }
   }
-  function stopSpeak() { speakToken++; if (synth) synth.cancel(); player.pause(); setTalking(false); SND.duck(false); }
+  let hush = null; // gọi để lượt nói đang chờ xong ngay (khi cháu bấm Bỏ qua, đổi màn…)
+  function stopSpeak() { if (hush) { hush(); hush = null; } speakToken++; if (synth) synth.cancel(); player.pause(); setTalking(false); SND.duck(false); }
 
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   /* Nghe giọng cháu. Cách chính: ghi âm ngắn rồi gửi trạm AI (Qwen ASR, dùng được cả ở Trung Quốc).
@@ -382,10 +385,17 @@
     $$("[data-icon]").forEach((el) => { if (!el.innerHTML) el.innerHTML = window.OBK_ART.icon(el.dataset.icon); });
     $$("[data-sticker]").forEach((el) => { if (!el.innerHTML) el.innerHTML = window.OBK_ART.sticker(el.dataset.sticker); });
   }
+  /* Mỗi chỗ vẽ một bản SVG có id riêng: nếu hai bản trùng id mà bản đầu đang ẩn
+     (ở màn khác), Chrome không tô được hoa văn (nền giấy điệp, áo hoa) ở bản sau. */
+  let svgSeq = 0;
+  function uniqueIds(svg) {
+    const n = ++svgSeq;
+    return svg.replace(/id="([^"]+)"/g, `id="$1-${n}"`).replace(/url\(#([^)]+)\)/g, `url(#$1-${n})`);
+  }
   function renderSvgSlots() {
     $$("[data-svg]").forEach((el) => {
       const which = el.dataset.svg === "current" ? (state.char || "ong") : el.dataset.svg;
-      if (el.dataset.drawn !== which) { el.innerHTML = window.OBK_SVG[which]; el.dataset.drawn = which; }
+      if (el.dataset.drawn !== which) { el.innerHTML = uniqueIds(window.OBK_SVG[which]); el.dataset.drawn = which; }
     });
   }
 
@@ -393,6 +403,7 @@
     if (state.screen === "session" && screen !== "session") endSession();
     if (push && state.screen !== screen) state.history.push(state.screen);
     state.screen = screen;
+    document.body.dataset.screen = screen;
     $$(".screen").forEach((s) => (s.hidden = s.id !== "screen-" + screen));
     $("#btn-back").hidden = screen === "home";
     renderSvgSlots();
@@ -403,6 +414,29 @@
     if (screen === "teacher") renderTeacher();
     if (screen === "settings") renderSettings();
   }
+  /* Nút dành cho bố mẹ: giữ 1,5 giây mới mở; chạm nhanh thì nhắc cách mở */
+  function holdToOpen(btn, open) {
+    let t = null;
+    const cancel = () => { clearTimeout(t); t = null; btn.classList.remove("holding"); };
+    btn.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      btn.classList.add("holding");
+      t = setTimeout(() => { cancel(); open(); }, 1500);
+    });
+    ["pointerup", "pointerleave", "pointercancel"].forEach((ev) => btn.addEventListener(ev, () => {
+      if (t && ev === "pointerup") hint(btn, "Bố mẹ giữ nút này một lúc để mở");
+      cancel();
+    }));
+    btn.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); } });
+    btn.addEventListener("contextmenu", (e) => e.preventDefault());
+  }
+  function hint(el, text) {
+    let h = $("#hint");
+    if (!h) { h = document.createElement("div"); h.id = "hint"; h.setAttribute("role", "status"); document.body.appendChild(h); }
+    h.textContent = text; h.classList.add("on");
+    clearTimeout(hint.t); hint.t = setTimeout(() => h.classList.remove("on"), 2200);
+  }
+
   function back() {
     stopSpeak();
     let prev = state.history.pop() || "home";
@@ -439,7 +473,7 @@
       <g class="khe-crown">
         <circle cx="60" cy="40" r="28" fill="#3f7d4e" ${sw}/><circle cx="36" cy="46" r="18" fill="#3f7d4e" ${sw}/><circle cx="84" cy="46" r="18" fill="#3f7d4e" ${sw}/>
         <circle cx="46" cy="26" r="16" fill="#4f9a5e" ${sw}/><circle cx="74" cy="26" r="16" fill="#4f9a5e" ${sw}/><circle cx="60" cy="54" r="16" fill="#4f9a5e" ${sw}/>
-        <path d="M40 40 q4 -4 8 0 M66 34 q4 -4 8 0 M54 60 q4 -4 8 0 M28 50 q3 -3 6 0 M82 52 q3 -3 6 0" stroke="#2c5e38" stroke-width="1.2" fill="none"/>
+        <g fill="#2c5e38"><path d="M40 40 q4 -5 9 -3 q-4 5 -9 3z"/><path d="M66 32 q4 -5 9 -3 q-4 5 -9 3z"/><path d="M53 60 q4 -5 9 -3 q-4 5 -9 3z"/><path d="M27 50 q3 -4 7 -2 q-3 4 -7 2z"/><path d="M82 52 q3 -4 7 -2 q-3 4 -7 2z"/></g>
         ${KHE_SLOTS.slice(0, shown).map(([x, y], i) => fruit(x, y, i)).join("")}
       </g>
       ${extra > 0 ? `<g transform="translate(88 82)"><path d="M-12 -4 H12 L9 8 H-9Z" fill="#c98f4a" ${sw}/><ellipse cx="-4" cy="-5" rx="3" ry="4" fill="#f2c230" ${sw}/><ellipse cx="4" cy="-5" rx="3" ry="4" fill="#f2c230" ${sw}/>
@@ -532,13 +566,34 @@
     const box = $("#assigned");
     const a = store.get("assigned", null);
     const item = a && findLesson(a.mode, a.id);
-    if (!item) { box.hidden = true; return; }
-    const done = stats().lessons.some((l) => l.id === item.id && l.date >= a.date);
+    const done = item && stats().lessons.some((l) => l.id === item.id && l.date >= a.date);
+    if (!item || done) { renderToday(box); return; }
     box.hidden = false;
     box.innerHTML = `<span class="assigned-icon">${window.OBK_ART.icon(item.id) || window.OBK_ART.icon("teacher")}</span>
       <span class="assigned-text"><small>Bài cô giao tuần này</small><b>${esc(item.title)}</b></span>
       ${done ? '<span class="assigned-done">Đã học ✓</span>' : `<span class="assigned-go">Học ngay</span>`}`;
     box.onclick = () => startSession(a.mode, item);
+  }
+
+  /* Gợi ý "Hôm nay học gì": đổi loại bài theo ngày, ưu tiên bài cháu chưa học */
+  function renderToday(box) {
+    const learned = new Set(stats().lessons.map((l) => l.id));
+    const order = ["stories", "rhymes", "chats"];
+    const day = Math.floor(Date.now() / 864e5);
+    let pick = null;
+    for (let k = 0; k < order.length && !pick; k++) {
+      const mode = order[(day + k) % order.length];
+      const list = lessonsOf(mode);
+      const fresh = list.filter((x) => !learned.has(lessonKey(mode, x.id)));
+      const it = fresh[0] || (k === order.length - 1 ? list[day % list.length] : null);
+      if (it) pick = { mode, item: it };
+    }
+    if (!pick) { box.hidden = true; return; }
+    box.hidden = false;
+    box.innerHTML = `<span class="assigned-icon">${window.OBK_ART.icon(pick.item.id) || window.OBK_ART.icon(pick.mode)}</span>
+      <span class="assigned-text"><small>Hôm nay học gì?</small><b>${esc(pick.item.title)}</b></span>
+      <span class="assigned-go">Học ngay</span>`;
+    box.onclick = () => startSession(pick.mode, pick.item);
   }
 
   function openMode(mode) {
@@ -552,7 +607,7 @@
     lessonsOf(mode).forEach((item) => {
       const b = document.createElement("button");
       b.className = "item" + (mode === "bedtime" ? " night-item" : "");
-      let sub = mode === "rhymes" ? item.kind : mode === "stories" ? `${item.steps.length} lượt` : mode === "bedtime" ? "Chỉ nghe, không cần trả lời" : "Trò chuyện";
+      let sub = mode === "rhymes" ? item.kind : mode === "stories" ? `Khoảng ${Math.max(2, Math.round(item.steps.length / 3))} phút` : mode === "bedtime" ? "Chỉ nghe, không cần trả lời" : "Trò chuyện";
       if (item.custom) sub = "Bài của cô" + (item.by ? " " + item.by : "") + " · " + sub;
       b.innerHTML = `<span class="item-emoji">${window.OBK_ART.icon(item.id) || window.OBK_ART.icon(item.custom ? "teacher" : "stories")}</span><span>${esc(item.title)}<small>${esc(sub)}</small></span>` +
         (done.has(lessonKey(mode, item.id)) ? '<span class="check" title="Đã học">✓</span>' : "");
@@ -651,6 +706,31 @@
     const s = state.session;
     if (!s || !s.steps.length) return;
     $("#progress-bar").style.width = Math.round(((s.i + 1) / s.steps.length) * 100) + "%";
+  }
+
+  /* Màn học như sân khấu tranh: chỉ để lượt đang học trước mắt cháu.
+     Các câu trước được cất đi (vẫn còn trong trang), bấm "Xem lại" để mở. */
+  function stageTurn() {
+    const log = $("#log");
+    const msgs = $$(".msg:not(.past)", log);
+    if (!msgs.length) return;
+    msgs.forEach((m) => m.classList.add("past"));
+    log.classList.remove("show-past");
+    let b = $(".past-toggle", log);
+    if (!b) {
+      b = document.createElement("button");
+      b.className = "past-toggle";
+      b.onclick = () => {
+        const open = log.classList.toggle("show-past");
+        b.setAttribute("aria-expanded", open);
+        b.innerHTML = (open ? IC.up || "" : IC.again) + (open ? " Ẩn các câu trước" : " Xem lại các câu trước");
+      };
+      const scene = $(".scene", log);
+      log.insertBefore(b, scene ? scene.nextSibling : log.firstChild);
+    }
+    b.setAttribute("aria-expanded", "false");
+    b.innerHTML = IC.again + " Xem lại các câu trước";
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function scrollDown() {
@@ -841,6 +921,12 @@
   /* ----- Ô trả lời ----- */
   function panel(html) { const p = $("#input-panel"); p.innerHTML = html; if (html) scrollDown(); return p; }
 
+  function waitPanel() {
+    const who = state.char === "ba" ? "Bà" : "Ông";
+    const p = panel(`<div class="wait-row" role="status"><span class="wait-dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="wait-text">${who} đang nói…</span><button class="btn btn-ghost" id="btn-hush">${IC.skip} Bỏ qua</button></div>`);
+    $("#btn-hush", p).onclick = () => stopSpeak();
+  }
+
   function showContinue(label = "Tiếp") {
     const p = panel(`<button class="btn btn-big" id="btn-next">${label} ${IC.send}</button>`);
     $("#btn-next", p).onclick = () => { stopSpeak(); next(); };
@@ -916,9 +1002,9 @@
     "Đúng rồi! Cháu giỏi quá!", "Giỏi lắm cháu ơi!", "Hay quá! Cháu nhớ giỏi thật!",
     "Đúng rồi, {X} thương cháu quá!", "Tuyệt vời! Cháu thông minh lắm!"
   ];
+  // sau câu trả lời chưa đúng: động viên, không khen "giỏi" để cháu không hiểu nhầm là đúng
   const ENCOURAGE = [
-    "Cháu cố gắng lắm, giỏi lắm!", "Không sao đâu, cháu học nhanh lắm!",
-    "Cháu chịu khó quá, {X} vui lắm!", "Lần sau cháu nhớ ngay thôi, giỏi lắm!"
+    "Không sao đâu cháu.", "Lần sau cháu sẽ nhớ thôi.", "Mình cùng nhớ nhé."
   ];
   const REPLY_OPEN = ["Ồ, thế à!", "Hay quá!", "À, {X} hiểu rồi."];
   const READ_DONE = ["Cháu đọc hay quá!", "Giỏi lắm, đọc to rõ ràng!", "Hay lắm cháu ơi!"];
@@ -947,8 +1033,9 @@
     if (s.i >= s.steps.length) { finish(); return; }
     const step = s.steps[s.i];
     panel("");
+    stageTurn();
     if (s.mode === "bedtime") {
-      const p = panel(`<div class="btn-row"><button class="btn btn-ghost" id="btn-bt-stop">${IC.check} Dừng nghe</button></div>`);
+      const p = panel(`<div class="btn-row"><button class="btn btn-ghost" id="btn-bt-stop">Dừng nghe</button></div>`);
       $("#btn-bt-stop", p).onclick = () => { stopSpeak(); s.i = s.steps.length; finish(); };
       await gpSay(step.text, { force: true, pic: picOf(s, step) }).spoken;
       if (state.session !== s || s.i >= s.steps.length) return;
@@ -979,7 +1066,7 @@
       onAnswer: async (txt, alts, idx, src) => {
         kidSay(txt);
         if (src !== "tap") recordSaid(null, false);
-        panel("");
+        waitPanel();
         await wait(350);
         if (step.open) {
           const head = idx == null ? pick(REPLY_OPEN) + " " : "";
@@ -1032,7 +1119,7 @@
       if (!txt) { gpSay(pick(READ_DONE), { cls: "praise" }); showContinue(); return; }
       if (best >= READ_PASS || s.tries >= 1) {
         confetti();
-        gpSay((best >= READ_PASS ? pick(READ_OK) : "Cháu cố gắng lắm! Mình cùng đọc lại một lần nữa nhé: " + step.text), { cls: "praise" });
+        gpSay((best >= READ_PASS ? pick(READ_OK) : "Mình cùng đọc lại một lần nữa nhé: " + step.text), { cls: "praise" });
         showContinue();
       } else {
         s.tries++;
@@ -1183,7 +1270,17 @@
     const slug = norm(title).replace(/\s+/g, "-").slice(0, 30) || "bai";
     return sanitizeLesson({ id: "co-" + slug, title, kind, by, steps, parentTips: tips.split(/\n+/).map((x) => x.trim()).filter(Boolean) });
   }
+  function addQuestionLine() {
+    const q = $("#q-text").value.trim().replace(/^\?\s*/, "").replace(/\|/g, "/");
+    const opts = ["#q-right", "#q-wrong1", "#q-wrong2"].map((id) => $(id).value.trim().replace(/\|/g, "/")).filter(Boolean);
+    if (!q || opts.length < 2) { $("#t-status").textContent = "Cô điền câu hỏi, đáp án đúng và ít nhất một đáp án sai nhé."; return; }
+    const body = $("#t-body");
+    body.value = body.value.replace(/\s*$/, "") + (body.value.trim() ? "\n" : "") + "? " + [q].concat(opts).join(" | ");
+    ["#q-text", "#q-right", "#q-wrong1", "#q-wrong2"].forEach((id) => ($(id).value = ""));
+    $("#t-status").textContent = "Đã chèn câu hỏi vào cuối phần nội dung.";
+  }
   function renderTeacher() {
+    $("#btn-q-add").onclick = addQuestionLine;
     const sel = $("#t-assign");
     sel.innerHTML = allLessons().map((l) => `<option value="${l.mode}:${esc(l.id)}">${esc(l.label)}: ${esc(l.title)}${l.custom ? " (bài của cô)" : ""}</option>`).join("");
     const upd = () => { const [m, id] = sel.value.split(":"); $("#t-link").value = assignLink(m, id); };
@@ -1329,7 +1426,7 @@
         else if (st.t === "repeat") {
           add("Cháu đọc theo nhé: " + st.text);
           add("Gần đúng rồi cháu ơi! Cháu nghe {X} đọc lại nhé: " + st.text);
-          add("Cháu cố gắng lắm! Mình cùng đọc lại một lần nữa nhé: " + st.text);
+          add("Mình cùng đọc lại một lần nữa nhé: " + st.text);
         } else { add(st.text); add(st.recast); add(st.yes); add(st.reply); }
       });
     }));
@@ -1366,7 +1463,7 @@
     $("#btn-switch-char").onclick = () => show("home");
     $("#btn-back").onclick = back;
     $("#brand").onclick = () => { state.history = []; show(state.char ? "modes" : "home", false); };
-    $("#btn-parent").onclick = () => show("parent");
+    holdToOpen($("#btn-parent"), () => show("parent"));
     $("#btn-settings").onclick = () => show("settings");
     $("#sheet-close").onclick = () => ($("#sheet").hidden = true);
     $("#sheet").onclick = (e) => { if (e.target.id === "sheet") $("#sheet").hidden = true; };

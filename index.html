@@ -6,7 +6,7 @@
   <title>Ông Bà Kể</title>
   <meta name="description" content="Ông Bà Kể – trợ lý luyện nói tiếng Việt cho trẻ em gốc Việt ở nước ngoài.">
   <meta name="theme-color" content="#f7ecd2">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%23f2b632'/%3E%3Ctext x='32' y='44' font-size='34' text-anchor='middle'%3E%F0%9F%8F%AE%3C/text%3E%3C/svg%3E">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg viewBox='0 0 64 64' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M3 25 Q8 27 11 24 Q22 20 32 9 Q42 20 53 24 Q56 27 61 25 Q58 31 52 31 L12 31 Q6 31 3 25Z' fill='%23b3301d' stroke='%23241a12' stroke-width='2.6' stroke-linejoin='round'/%3E%3Cpath d='M17 26 Q25 22 32 15 Q39 22 47 26' fill='none' stroke='%23d99a1c' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='M32 55 C25 50 16 49 8 51 V35 C16 33 25 34 32 39 Z' fill='%23fdf6e3' stroke='%23241a12' stroke-width='2.6' stroke-linejoin='round'/%3E%3Cpath d='M32 55 C39 50 48 49 56 51 V35 C48 33 39 34 32 39 Z' fill='%23fdf6e3' stroke='%23241a12' stroke-width='2.6' stroke-linejoin='round'/%3E%3Cpath d='M14 41 q7 -1 13 2 M14 46 q7 -1 13 2 M37 43 q6 -3 13 -2 M37 48 q6 -3 13 -2' stroke='%23241a12' stroke-width='1.6' fill='none' stroke-linecap='round' opacity='.55'/%3E%3C/svg%3E">
   <link href="fonts/fonts.css" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <link rel="manifest" href="manifest.webmanifest">
@@ -27,7 +27,7 @@
     <button class="icon-btn" id="btn-back" aria-label="Quay lại" hidden>
       <svg viewBox="0 0 24 24"><path d="M15 5 L8 12 L15 19" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </button>
-    <button class="brand" id="brand"><span class="brand-mark" aria-hidden="true">Kể</span>Ông Bà Kể</button>
+    <button class="brand" id="brand"><span class="brand-mark"><svg class="logo" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><path d="M3 25 Q8 27 11 24 Q22 20 32 9 Q42 20 53 24 Q56 27 61 25 Q58 31 52 31 L12 31 Q6 31 3 25Z" fill="#b3301d" stroke="#241a12" stroke-width="2.6" stroke-linejoin="round"/><path d="M17 26 Q25 22 32 15 Q39 22 47 26" fill="none" stroke="#d99a1c" stroke-width="2" stroke-linecap="round"/><path d="M32 55 C25 50 16 49 8 51 V35 C16 33 25 34 32 39 Z" fill="#fdf6e3" stroke="#241a12" stroke-width="2.6" stroke-linejoin="round"/><path d="M32 55 C39 50 48 49 56 51 V35 C48 33 39 34 32 39 Z" fill="#fdf6e3" stroke="#241a12" stroke-width="2.6" stroke-linejoin="round"/><path d="M14 41 q7 -1 13 2 M14 46 q7 -1 13 2 M37 43 q6 -3 13 -2 M37 48 q6 -3 13 -2" stroke="#241a12" stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".55"/></svg></span>Ông Bà Kể</button>
     <div class="top-actions">
       <button class="icon-btn" id="btn-music" aria-label="Bật/tắt nhạc nền" title="Nhạc nền">
         <svg viewBox="0 0 24 24"><path d="M4 9 H8 L13 5 V19 L8 15 H4Z" fill="currentColor"/><path class="wave" d="M16 9 q2 3 0 6 M19 6.5 q4 5.5 0 11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
@@ -80,11 +80,11 @@
       </div>
       <button class="assigned" id="assigned" hidden></button>
       <div class="mode-grid">
-        <button class="mode-card m-story" data-mode="stories"><span class="seal" aria-hidden="true">Kể</span><span class="mode-icon" data-icon="stories"></span><span class="mode-name">Kể chuyện cổ tích</span><span class="mode-sub">Tấm Cám, Cây khế…</span></button>
-        <button class="mode-card m-chat" data-mode="chats"><span class="seal" aria-hidden="true">Nói</span><span class="mode-icon" data-icon="chats"></span><span class="mode-name">Trò chuyện hằng ngày</span><span class="mode-sub">Bữa cơm, đi học, gia đình</span></button>
-        <button class="mode-card m-rhyme" data-mode="rhymes"><span class="seal" aria-hidden="true">Hát</span><span class="mode-icon" data-icon="rhymes"></span><span class="mode-name">Đồng dao, ca dao</span><span class="mode-sub">Nghe, đọc theo, hiểu nghĩa</span></button>
-        <button class="mode-card m-quiz" data-mode="quiz"><span class="seal" aria-hidden="true">Đố</span><span class="mode-icon" data-icon="quiz"></span><span class="mode-name">Đố vui văn hóa</span><span class="mode-sub">Tết, áo dài, món ăn</span></button>
-        <button class="mode-card m-bed" data-mode="bedtime"><span class="seal" aria-hidden="true">Ngủ</span><span class="mode-icon" data-icon="bedtime"></span><span class="mode-name">Nghe trước giờ ngủ</span><span class="mode-sub">Nhắm mắt, nghe ông bà kể</span></button>
+        <button class="mode-card m-story" data-mode="stories"><span class="mode-icon" data-icon="stories"></span><span class="mode-name">Kể chuyện cổ tích</span><span class="mode-sub">Tấm Cám, Cây khế…</span></button>
+        <button class="mode-card m-chat" data-mode="chats"><span class="mode-icon" data-icon="chats"></span><span class="mode-name">Trò chuyện hằng ngày</span><span class="mode-sub">Bữa cơm, đi học, gia đình</span></button>
+        <button class="mode-card m-rhyme" data-mode="rhymes"><span class="mode-icon" data-icon="rhymes"></span><span class="mode-name">Đồng dao, ca dao</span><span class="mode-sub">Nghe, đọc theo, hiểu nghĩa</span></button>
+        <button class="mode-card m-quiz" data-mode="quiz"><span class="mode-icon" data-icon="quiz"></span><span class="mode-name">Đố vui văn hóa</span><span class="mode-sub">Tết, áo dài, món ăn</span></button>
+        <button class="mode-card m-bed" data-mode="bedtime"><span class="mode-icon" data-icon="bedtime"></span><span class="mode-name">Nghe trước giờ ngủ</span><span class="mode-sub">Nhắm mắt, nghe ông bà kể</span></button>
       </div>
       <div class="khe-card" id="khe-card">
         <div class="khe-art" id="khe-art" aria-hidden="true"></div>
@@ -128,7 +128,7 @@
       <p class="muted parent-sub" id="parent-sub">Tiến bộ của con</p>
       <div class="stats">
         <div class="stat"><span class="stat-num" id="st-today">0</span><span class="stat-label">phút hôm nay</span></div>
-        <div class="stat"><span class="stat-num" id="st-total">0</span><span class="stat-label">phút tất cả</span></div>
+        <div class="stat"><span class="stat-num" id="st-total">0</span><span class="stat-label">phút từ trước đến nay</span></div>
         <div class="stat"><span class="stat-num" id="st-lessons">0</span><span class="stat-label">bài đã học</span></div>
         <div class="stat"><span class="stat-num" id="st-said">0</span><span class="stat-label">câu con tự nói</span></div>
         <div class="stat"><span class="stat-num" id="st-uptake">0</span><span class="stat-label">lần nói lại câu đúng</span></div>
@@ -158,7 +158,7 @@
         <p class="muted">Giao bài cho cả lớp bằng một đường link, hoặc tự soạn truyện mới.</p>
         <button class="btn btn-green" id="btn-teacher">Mở Góc giáo viên</button>
       </div>
-      <p class="muted small">Dữ liệu chỉ lưu trên máy này (localStorage), không gửi đi đâu.</p>
+      <p class="muted small">Dữ liệu chỉ lưu trên máy này, không gửi đi đâu.</p>
       <button class="btn btn-ghost" id="btn-reset">Xóa dữ liệu luyện tập</button>
     </section>
 
@@ -182,6 +182,16 @@
           <label class="field"><span>Người soạn</span><input id="t-by" type="text" maxlength="40" placeholder="Ví dụ: cô Lan"></label>
         </div>
         <label class="field"><span>Nội dung</span><textarea id="t-body" rows="8" lang="vi"></textarea></label>
+        <details class="q-add">
+          <summary>+ Thêm câu hỏi (không cần gõ ký hiệu)</summary>
+          <label class="field"><span>Câu hỏi</span><input id="q-text" type="text" maxlength="120" placeholder="Ví dụ: Lang Liêu có những gì?"></label>
+          <label class="field"><span>Đáp án đúng</span><input id="q-right" type="text" maxlength="80" placeholder="Ví dụ: Gạo nếp và đậu xanh"></label>
+          <div class="field-row">
+            <label class="field"><span>Đáp án sai 1</span><input id="q-wrong1" type="text" maxlength="80" placeholder="Vàng bạc"></label>
+            <label class="field"><span>Đáp án sai 2</span><input id="q-wrong2" type="text" maxlength="80" placeholder="(không bắt buộc)"></label>
+          </div>
+          <button class="btn btn-ghost" id="btn-q-add" type="button">Chèn câu hỏi vào nội dung</button>
+        </details>
         <label class="field"><span>Ba câu gợi ý cho bố mẹ (mỗi dòng một câu)</span><textarea id="t-tips" rows="3" lang="vi"></textarea></label>
         <div class="btn-row">
           <button class="btn btn-ghost" id="btn-t-sample">Điền bài mẫu</button>
