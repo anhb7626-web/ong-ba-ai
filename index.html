@@ -182,6 +182,16 @@
           <label class="field"><span>Người soạn</span><input id="t-by" type="text" maxlength="40" placeholder="Ví dụ: cô Lan"></label>
         </div>
         <label class="field"><span>Nội dung</span><textarea id="t-body" rows="8" lang="vi"></textarea></label>
+        <details class="q-add">
+          <summary>+ Thêm câu hỏi (không cần gõ ký hiệu)</summary>
+          <label class="field"><span>Câu hỏi</span><input id="q-text" type="text" maxlength="120" placeholder="Ví dụ: Lang Liêu có những gì?"></label>
+          <label class="field"><span>Đáp án đúng</span><input id="q-right" type="text" maxlength="80" placeholder="Ví dụ: Gạo nếp và đậu xanh"></label>
+          <div class="field-row">
+            <label class="field"><span>Đáp án sai 1</span><input id="q-wrong1" type="text" maxlength="80" placeholder="Vàng bạc"></label>
+            <label class="field"><span>Đáp án sai 2</span><input id="q-wrong2" type="text" maxlength="80" placeholder="(không bắt buộc)"></label>
+          </div>
+          <button class="btn btn-ghost" id="btn-q-add" type="button">Chèn câu hỏi vào nội dung</button>
+        </details>
         <label class="field"><span>Ba câu gợi ý cho bố mẹ (mỗi dòng một câu)</span><textarea id="t-tips" rows="3" lang="vi"></textarea></label>
         <div class="btn-row">
           <button class="btn btn-ghost" id="btn-t-sample">Điền bài mẫu</button>
