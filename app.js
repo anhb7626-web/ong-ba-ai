@@ -487,10 +487,10 @@
     $("#khe-art").innerHTML = kheTree(n, done);
     const x = state.char === "ba" ? "bà" : "ông";
     $("#khe-note").textContent = n === 0
-      ? `Học với ${x} hôm nay, cây sẽ ra quả đầu tiên đó!`
+      ? `Hôm nay học cùng ${x} nhé, cây sẽ ra quả đầu tiên đấy!`
       : done
         ? `${n} quả khế ngọt! Hôm nay cây đã ra quả mới rồi.` + (n >= 7 ? " Chim phượng bay về ăn khế kìa!" : "")
-        : `${n} quả khế. Học một chút với ${x} để cây ra thêm quả nhé!`;
+        : `Cây có ${n} quả rồi. Cháu học cùng ${x} một chút để cây ra thêm quả nhé!`;
   }
 
   function setGreeting() {
@@ -498,8 +498,8 @@
     const x = state.char === "ba" ? "Bà" : "Ông";
     const n = (settings.name || "").trim();
     $("#greet-text").textContent = n
-      ? `${x} đây! ${n} ơi, hôm nay cháu muốn làm gì với ${x.toLowerCase()} nào?`
-      : `${x} đây! Hôm nay cháu muốn làm gì với ${x.toLowerCase()} nào?`;
+      ? `${n} ơi, ${x.toLowerCase()} đây! Hôm nay cháu muốn học gì cùng ${x.toLowerCase()} nào?`
+      : `${x} đây! Hôm nay cháu muốn học gì cùng ${x.toLowerCase()} nào?`;
     $("#sticker-count").textContent = `${stats().stickers.length}/${window.OBK_ART.stickers.length}`;
   }
   function chooseChar(c) {
@@ -509,7 +509,7 @@
     const x = c === "ba" ? "Bà" : "Ông";
     setGreeting();
     show("modes");
-    speak(`${x} đây! Hôm nay cháu muốn làm gì với ${x.toLowerCase()} nào?`);
+    speak(`${x} đây! Hôm nay cháu muốn học gì cùng ${x.toLowerCase()} nào?`);
   }
 
   const MODE_NAMES = { stories: "📖 Kể chuyện cổ tích", chats: "🍚 Trò chuyện hằng ngày", rhymes: "🎶 Đồng dao – ca dao", bedtime: "🌙 Nghe trước giờ ngủ" };
@@ -636,7 +636,7 @@
       .concat(item.steps.filter((x) => x.t === "say").map(withPic))
       .concat([{ t: "say", text: "Hết truyện rồi. Chúc cháu ngủ ngon, mơ thật đẹp nhé!" }]);
     if (mode === "rhymes") {
-      const steps = [{ t: "say", text: `Bây giờ {X} đọc ${item.kind.toLowerCase()} “${item.title}”. Cháu nghe trước nhé.` }];
+      const steps = [{ t: "say", text: `Bây giờ {X} đọc bài ${item.kind.toLowerCase()} “${item.title}”, cháu nghe trước nhé.` }];
       steps.push({ t: "poem", lines: item.lines });
       const g = item.group || 2;
       steps.push({ t: "say", text: "Giờ cháu đọc theo {X} từng câu nhé." });
@@ -657,7 +657,7 @@
         steps.push({
           t: "ask", text: `Câu ${i + 1}: ${q.q}`,
           choices: order.map((k) => q.choices[k]), answer: order.indexOf(q.answer),
-          recast: `À, đáp án là: ${right}. ${q.explain}`,
+          recast: `À, đáp án đúng là: ${right}. ${q.explain}`,
           yes: q.explain, quiz: true
         });
       });
@@ -1000,16 +1000,16 @@
 
   const PRAISE = [
     "Đúng rồi! Cháu giỏi quá!", "Giỏi lắm cháu ơi!", "Hay quá! Cháu nhớ giỏi thật!",
-    "Đúng rồi, {X} thương cháu quá!", "Tuyệt vời! Cháu thông minh lắm!"
+    "Đúng rồi! Cháu nhớ bài kỹ quá!", "Tuyệt vời! Cháu thông minh lắm!"
   ];
   // sau câu trả lời chưa đúng: động viên, không khen "giỏi" để cháu không hiểu nhầm là đúng
   const ENCOURAGE = [
-    "Không sao đâu cháu.", "Lần sau cháu sẽ nhớ thôi.", "Mình cùng nhớ nhé."
+    "Không sao đâu cháu.", "Lần sau cháu sẽ nhớ thôi.", "Mình cùng nhớ lại nhé."
   ];
   const REPLY_OPEN = ["Ồ, thế à!", "Hay quá!", "À, {X} hiểu rồi."];
-  const READ_DONE = ["Cháu đọc hay quá!", "Giỏi lắm, đọc to rõ ràng!", "Hay lắm cháu ơi!"];
+  const READ_DONE = ["Cháu đọc hay quá!", "Giỏi lắm, cháu đọc to và rõ lắm!", "Hay lắm cháu ơi!"];
   const READ_PASS = 0.5; // đọc được nửa câu trở lên (tính cả chữ gần đúng) là khen "đúng rồi"
-  const READ_OK = ["Cháu đọc đúng rồi! Hay quá!", "Giỏi quá, đọc chuẩn lắm!"];
+  const READ_OK = ["Cháu đọc đúng rồi! Hay quá!", "Giỏi quá, cháu đọc chuẩn lắm!"];
 
   function confetti() {
     if (document.body.classList.contains("no-fx")) return;
@@ -1150,7 +1150,7 @@
     else if (s.mode === "stories") msg = "Hết truyện rồi! Cháu nghe chăm chú lắm. Tối nay cháu kể lại cho bố mẹ nghe nhé!";
     else if (s.mode === "bedtime") msg = "Ngủ ngon nhé cháu. Mai {X} kể chuyện khác cho cháu nghe.";
     else if (s.mode === "rhymes") msg = "Cháu đọc thuộc bài rồi đấy! Cháu đọc cho bố mẹ nghe nhé!";
-    else msg = "{Xc} nói chuyện với cháu vui quá! Mai mình nói chuyện tiếp nhé.";
+    else msg = "Hôm nay nói chuyện với cháu, {X} vui lắm! Mai mình lại nói chuyện tiếp nhé.";
     if (s.mode !== "bedtime") confetti();
     if (s.mode === "bedtime" && s.i < s.steps.length) { /* đã dừng giữa chừng */ }
     gpSay(msg, { cls: "praise" });
@@ -1263,7 +1263,7 @@
     text.split(/\n+/).map((l) => l.trim()).filter(Boolean).forEach((l) => {
       if (l.startsWith("?")) {
         const parts = l.slice(1).split("|").map((x) => x.trim()).filter(Boolean);
-        if (parts.length >= 3) steps.push({ t: "ask", text: parts[0], choices: parts.slice(1, 5), answer: 0, recast: `À, ${parts[1].replace(/[.!]$/, "")} cháu ạ.` });
+        if (parts.length >= 3) steps.push({ t: "ask", text: parts[0], choices: parts.slice(1, 5), answer: 0, recast: `À, đáp án đúng là: ${parts[1].replace(/[.!]$/, "")}.`, model: parts[1] });
         else if (parts.length) steps.push({ t: "say", text: parts.join(" ") });
       } else steps.push({ t: "say", text: l });
     });
@@ -1419,7 +1419,7 @@
     const out = [];
     const add = (t) => { if (t) out.push(fill(t)); };
     const x = persona === "ba" ? "Bà" : "Ông";
-    add(`${x} đây! Hôm nay cháu muốn làm gì với ${x.toLowerCase()} nào?`);
+    add(`${x} đây! Hôm nay cháu muốn học gì cùng ${x.toLowerCase()} nào?`);
     ["stories", "chats", "rhymes"].forEach((mode) => D[mode].forEach((item) => {
       buildSteps(mode, item).forEach((st) => {
         if (st.t === "poem") add(st.lines.join(". "));
@@ -1440,7 +1440,7 @@
       "Giỏi quá!", "Cháu học thêm là nhớ hết ngay!", "{Xc} thương cháu!",
       "Hết truyện rồi! Cháu nghe chăm chú lắm. Tối nay cháu kể lại cho bố mẹ nghe nhé!",
       "Cháu đọc thuộc bài rồi đấy! Cháu đọc cho bố mẹ nghe nhé!",
-      "{Xc} nói chuyện với cháu vui quá! Mai mình nói chuyện tiếp nhé.",
+      "Hôm nay nói chuyện với cháu, {X} vui lắm! Mai mình lại nói chuyện tiếp nhé.",
       "Cháu ơi, hôm nay cháu muốn kể gì cho {X} nghe nào?",
       "{Xc} nghe không rõ lắm, chắc mạng yếu. Mình nói chuyện theo bài soạn sẵn nhé!",
       "Chào cháu, {X} đây. Cháu có khỏe không?",
